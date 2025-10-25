@@ -3,30 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferris - Book your trip</title>
+    <title>Ferris - Plan your perfect trip</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --warm-bg: #FBF9F6;
+            --card-bg: #FFFFFF;
+            --warm-brown: #8B7355;
+            --soft-text: #3A3632;
+            --muted-text: #6B6562;
+            --light-border: #E8E3DD;
+            --accent-warm: #C4A57B;
+        }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--warm-bg);
+            color: var(--soft-text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
         
-        .header {
-            background: rgba(255,255,255,0.95);
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        h1, h2, h3 {
+            font-family: 'Crimson Pro', serif;
+            font-weight: 400;
         }
         
-        .header h1 {
+        .header {
+            background: var(--card-bg);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo h1 {
             font-size: 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--soft-text);
+            letter-spacing: 0.1em;
+        }
+        
+        .tagline {
+            color: var(--muted-text);
+            font-size: 0.875rem;
+            font-weight: 300;
         }
         
         .container {
@@ -40,24 +71,43 @@
         }
         
         .chat-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
-            height: 600px;
+            min-height: 600px;
         }
         
         .messages {
             flex: 1;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 2.5rem 2rem;
+        }
+        
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--light-border);
+            border-radius: 3px;
         }
         
         .message {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             display: flex;
             gap: 1rem;
+            opacity: 0;
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
         
         .message.user {
@@ -65,111 +115,265 @@
         }
         
         .message-content {
-            max-width: 70%;
-            padding: 1rem 1.25rem;
+            max-width: 75%;
+            padding: 1.25rem 1.75rem;
             border-radius: 12px;
-            line-height: 1.5;
-            white-space: pre-wrap;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            font-weight: 300;
         }
         
         .message.bot .message-content {
-            background: #f0f2f5;
-            color: #000;
-        }
-        
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .itinerary-card {
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 1rem;
+            background: #F5F1EB;
+            color: var(--soft-text);
             max-width: 100%;
         }
         
-        .itinerary-card img {
+        .message.user .message-content {
+            background: var(--warm-brown);
+            color: white;
+            max-width: 75%;
+        }
+        
+        .itinerary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .itinerary-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .property-image {
             width: 100%;
-            height: 200px;
+            height: 260px;
             object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            filter: saturate(0.85);
         }
         
-        .itinerary-header {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .property-content {
+            padding: 2rem;
+        }
+        
+        .property-name {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--soft-text);
+            margin-bottom: 0.75rem;
+        }
+        
+        .verified-badge {
+            display: inline-block;
+            color: var(--warm-brown);
+            font-size: 0.75rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        
+        .why-property {
+            background: #F9F6F1;
+            border-left: 3px solid var(--accent-warm);
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            color: var(--muted-text);
+            line-height: 1.7;
+            font-weight: 300;
+        }
+        
+        .property-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--light-border);
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-value {
+            display: block;
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--soft-text);
+        }
+        
+        .detail-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--muted-text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+        
+        .amenities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin: 1.25rem 0;
+        }
+        
+        .amenity {
+            background: #F9F6F1;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--muted-text);
+            font-weight: 300;
+        }
+        
+        .pricing-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--light-border);
+        }
+        
+        .price-detail {
+            font-size: 0.9rem;
+            color: var(--muted-text);
             margin-bottom: 0.5rem;
-            color: #667eea;
         }
         
-        .price-total {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #667eea;
-            margin: 1rem 0;
+        .total-price {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2.25rem;
+            font-weight: 400;
+            color: var(--warm-brown);
+        }
+        
+        .quick-replies {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+            width: 100%; 
+            justify-content: flex-start;
+        }
+        
+        .quick-reply-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--warm-brown);
+            border-radius: 24px;
+            color: var(--warm-brown);
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+        
+        .quick-reply-btn:hover {
+            background: var(--warm-brown);
+            color: white;
         }
         
         .input-container {
-            padding: 1.5rem;
-            border-top: 1px solid #e0e0e0;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--light-border);
             display: flex;
             gap: 1rem;
+            background: var(--card-bg);
         }
         
         .input-container input {
             flex: 1;
-            padding: 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--light-border);
+            border-radius: 24px;
+            background: var(--warm-bg);
+            font-size: 0.95rem;
             outline: none;
+            transition: all 0.3s ease;
+            font-weight: 300;
+            color: var(--soft-text);
+        }
+        
+        .input-container input::placeholder {
+            color: var(--muted-text);
         }
         
         .input-container input:focus {
-            border-color: #667eea;
+            border-color: var(--warm-brown);
+            background: var(--card-bg);
         }
         
         .input-container button {
             padding: 1rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--warm-brown);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 24px;
+            font-size: 0.9rem;
+            font-weight: 500;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .quick-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
+        .input-container button:hover {
+            background: #6B5843;
+            transform: translateY(-1px);
         }
         
-        .quick-action {
-            padding: 0.5rem 1rem;
-            background: white;
-            border: 2px solid #667eea;
-            color: #667eea;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
+        .input-container button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
-        .quick-action:hover {
-            background: #667eea;
-            color: white;
+        .typing-indicator {
+            display: none;
+            padding: 1rem 2rem;
+            color: var(--muted-text);
+            font-style: italic;
+            font-weight: 300;
+            font-size: 0.9rem;
+        }
+        
+        .typing-indicator.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+            }
+            
+            .messages {
+                padding: 1.5rem 1rem;
+            }
+            
+            .message-content {
+                max-width: 100%;
+            }
+            
+            .property-content {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Ferris ✈️</h1>
+        <div class="header-content">
+            <div class="logo">
+                <h1>FERRIS</h1>
+            </div>
+            <div class="tagline">We'll take care of you</div>
+        </div>
     </div>
     
     <div class="container">
@@ -177,21 +381,25 @@
             <div class="messages" id="messages">
                 <div class="message bot">
                     <div class="message-content">
-                        👋 Hey! Where do you want to go?
-                        <div class="quick-actions">
-                            <div class="quick-action" onclick="sendQuick('Beach weekend in San Diego')">🏖️ Beach weekend</div>
-                            <div class="quick-action" onclick="sendQuick('Skiing in Tahoe this weekend')">⛷️ Ski trip</div>
-                            <div class="quick-action" onclick="sendQuick('Wine tasting in Napa')">🍷 Wine country</div>
+                        Hi there! 👋 Where would you like to go?
+                        <div class="quick-replies">
+                            <button class="quick-reply-btn" onclick="sendQuick('Beach weekend in San Diego')">🏖️ Beach weekend</button>
+                            <button class="quick-reply-btn" onclick="sendQuick('Skiing in Tahoe')">⛷️ Mountain escape</button>
+                            <button class="quick-reply-btn" onclick="sendQuick('Wine tasting in Napa')">🍷 Wine country</button>
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                Finding the perfect spot for you...
             </div>
             
             <div class="input-container">
                 <input 
                     type="text" 
                     id="messageInput" 
-                    placeholder="e.g., Beach weekend in San Diego under $500"
+                    placeholder="Tell us about your dream trip..."
                     onkeypress="if(event.key==='Enter') sendMessage()"
                 />
                 <button onclick="sendMessage()" id="sendBtn">Send</button>
@@ -202,7 +410,7 @@
     <script>
         let sessionId = 'session_' + Date.now();
         
-        function addMessage(text, isUser, itinerary = null) {
+        function addMessage(text, isUser, itinerary = null, quickReplies = []) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
@@ -211,22 +419,62 @@
             
             if (itinerary) {
                 const stay = itinerary.stay;
+                const nights = itinerary.nights || 2;
+                
                 content += `
                     <div class="itinerary-card">
-                        <img src="${stay.image_url}" alt="${stay.name}">
-                        <div class="itinerary-header">${stay.name}</div>
-                        <div class="price-total">$${itinerary.total_price.toFixed(0)}</div>
-                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-                            ${stay.beds} beds • ${stay.baths} baths • ⭐ ${stay.rating}/5
-                        </div>
-                        <div style="font-size: 0.85rem; color: #666;">
-                            ${itinerary.dates.check_in} → ${itinerary.dates.check_out}
+                        <img src="${stay.image_url}" alt="${stay.name}" class="property-image" onerror="this.style.display='none'">
+                        
+                        <div class="property-content">
+                            <div class="property-name">${stay.name}</div>
+                            <div class="verified-badge">✓ Verified</div>
+                            
+                            ${itinerary.why_this_property ? `
+                                <div class="why-property">
+                                    ${itinerary.why_this_property}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="property-details">
+                                <div class="detail-item">
+                                    <span class="detail-value">${stay.beds}</span>
+                                    <span class="detail-label">Bedrooms</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-value">${stay.rating}</span>
+                                    <span class="detail-label">Rating</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-value">${stay.review_count}</span>
+                                    <span class="detail-label">Reviews</span>
+                                </div>
+                            </div>
+                            
+                            <div class="amenities">
+                                ${stay.amenities.slice(0, 5).map(a => `<span class="amenity">${a}</span>`).join('')}
+                            </div>
+                            
+                            <div class="pricing-section">
+                                <div class="price-breakdown">
+                                    <div class="price-detail">${nights} nights at $${stay.price_per_night}/night</div>
+                                    <div class="total-price">$${itinerary.total_price.toFixed(0)}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
             }
             
             content += '</div>';
+            
+            if (quickReplies && quickReplies.length > 0 && !isUser) {
+                content += '<div class="quick-replies">';
+                quickReplies.forEach(reply => {
+                    content += `<button class="quick-reply-btn" onclick="sendQuick('${reply}')">${reply}</button>`;
+                });
+                content += '</div>';
+            }
+            
             messageDiv.innerHTML = content;
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -235,6 +483,14 @@
         function sendQuick(message) {
             document.getElementById('messageInput').value = message;
             sendMessage();
+        }
+        function askForCustomDates() {
+            const input = document.getElementById('messageInput');
+            input.placeholder = "e.g., November 15-17, or Dec 1-3";
+            input.focus();
+    
+    // Add helper message
+    addMessage("Sure! Just type your dates like 'Nov 15-17' or 'December 1-3'", false, null, []);
         }
         
         async function sendMessage() {
@@ -245,6 +501,8 @@
             
             addMessage(message, true);
             input.value = '';
+            
+            document.getElementById('typingIndicator').classList.add('active');
             document.getElementById('sendBtn').disabled = true;
             
             try {
@@ -261,11 +519,12 @@
                 });
                 
                 const data = await response.json();
-                addMessage(data.text, false, data.itinerary);
+                addMessage(data.text, false, data.itinerary, data.quick_replies || []);
                 
             } catch (error) {
-                addMessage('Sorry, something went wrong. Try again?', false);
+                addMessage('Sorry, something went wrong. Please try again.', false);
             } finally {
+                document.getElementById('typingIndicator').classList.remove('active');
                 document.getElementById('sendBtn').disabled = false;
                 input.focus();
             }

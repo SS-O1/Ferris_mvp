@@ -26,6 +26,7 @@ class ChatResponse(BaseModel):
     itinerary: Optional[Dict[str, Any]] = None
     state: StateType
     needed: List[str] = Field(default_factory=list)
+    quick_replies: List[str] = Field(default_factory=list)
 
 class SessionSlots(BaseModel):
     origin: Optional[str] = None
