@@ -66,7 +66,7 @@ Ferris_mvp/
 
 ## 👥 Team
 
-Built at UC Berkeley for YC W25
+Built at UC Berkeley for Calhacks 12.0
 ```
 
 **Save:** Cmd + S
