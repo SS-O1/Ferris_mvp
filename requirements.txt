@@ -1,0 +1,7 @@
+fastapi==0.114.0
+uvicorn==0.30.6
+pydantic==2.9.2
+python-dotenv==1.0.1
+python-dateutil==2.9.0.post0
+requests==2.31.0
+stripe==7.6.0

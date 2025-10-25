@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alto - Book trips in 60 seconds</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 1.25rem 3rem;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 4rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+        .feature {
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .feature h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .feature p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div>
+            <h1>Book trips in 60 seconds</h1>
+            <p>AI finds your perfect place. You just chat.</p>
+            <a href="/demo" class="cta-button">Try it now →</a>
+            <div style="margin-top: 2rem; opacity: 0.8; font-size: 0.9rem;">
+                No signup required • Free to use
+            </div>
+        </div>
+    </div>
+    
+    <div class="features">
+        <h2>How Alto is different</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>60-second booking</h3>
+                <p>Type where you want to go. We find the perfect place. You book. Done.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎯</div>
+                <h3>One perfect option</h3>
+                <p>No decision paralysis. We show you THE place you should book.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Just chat</h3>
+                <p>"Beach weekend under $500" or "Skiing in Tahoe". That's it.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="hero" style="min-height: 50vh;">
+        <div>
+            <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Ready to try it?</h2>
+            <a href="/demo" class="cta-button">Start booking →</a>
+        </div>
+    </div>
+</body>
+</html>
