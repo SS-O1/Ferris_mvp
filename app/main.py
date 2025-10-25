@@ -5,7 +5,7 @@ from .models import ChatRequest, ChatResponse
 from .state import STORE
 from .agent_v2 import process_message
 
-app = FastAPI(title="Alto MVP", version="2.0.0")
+app = FastAPI(title="Ferris MVP", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
