@@ -396,6 +396,7 @@
             </div>
             
             <div class="input-container">
+                <button id="micBtn">🎤 Hold to Talk</button>
                 <input 
                     type="text" 
                     id="messageInput" 
@@ -408,8 +409,204 @@
     </div>
     
     <script>
-        let sessionId = 'session_' + Date.now();
-        
+        let sessionId = localStorage.getItem('ferris_session') || (crypto.randomUUID?.() || String(Date.now()));
+        localStorage.setItem('ferris_session', sessionId);
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognizer = SpeechRecognition ? new SpeechRecognition() : null;
+        if (recognizer) {
+            recognizer.lang = 'en-US';
+            recognizer.interimResults = false;
+            recognizer.continuous = false;
+        }
+
+        const micBtn = document.getElementById('micBtn');
+
+        let isRecognitionRunning = false; // Track recognition state
+
+        async function startListening() {
+            if (!recognizer || isRecognitionRunning) return;
+            isRecognitionRunning = true;
+            recognizer.start();
+        }
+
+        async function stopListening() {
+            if (recognizer && isRecognitionRunning) {
+                recognizer.stop();
+                isRecognitionRunning = false;
+            }
+        }
+
+        // Remove conflicting click handler; a single click handler below will control start/stop
+
+        // Remove duplicate early recognizer handlers that referenced undefined processVoiceInput
+
+        function playDeepgramTTS(text) {
+            // Stream audio directly so playback can start as soon as data arrives
+            try {
+                const src = `http://localhost:3000/tts?text=${encodeURIComponent(text)}`;
+                const audio = new Audio();
+                audio.crossOrigin = 'anonymous';
+                audio.src = src;
+                audio.play().catch(err => {
+                    console.warn('Autoplay blocked or error playing TTS:', err);
+                    // Fallback: show a quick user gesture hint
+                });
+            } catch (error) {
+                console.error('Error starting TTS playback:', error);
+                alert('Failed to process text-to-speech. Please try again.');
+            }
+        }
+
+        // Replace SpeechSynthesisUtterance usage with playDeepgramTTS
+        function say(msg) {
+            playDeepgramTTS(msg);
+        }
+
+        // --- Conversational reply helpers ---
+        function one(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        function cleanForUI(text) {
+            if (!text) return '';
+            let t = String(text);
+            t = t.replace(/[*_`~]+/g, ''); // strip markdown
+            t = t.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '').replace(/[\u2600-\u27BF\u1F300-\u1FAFF]/g, ''); // remove emojis
+            t = t.replace(/type\s+book\b/gi, "say 'book'");
+            t = t.replace(/!+/g, '.');
+            t = t.replace(/\s{2,}/g, ' ').trim();
+            return t;
+        }
+
+        function conversationalOffer(ctx, data) {
+            const itin = data?.itinerary || null;
+            const stay = itin?.stay || null;
+            const nights = itin?.nights || null;
+
+            if (stay) {
+                const beds = stay.beds != null ? Number(stay.beds) : null;
+                const baths = stay.baths != null ? Number(stay.baths) : null;
+                const rating = stay.rating != null ? Number(stay.rating) : null;
+                const reviews = stay.review_count != null ? Number(stay.review_count) : null;
+                const priceTotal = typeof itin.total_price === 'number' ? `$${itin.total_price.toFixed(0)}` : (itin.total_price || '');
+
+                const openers = [
+                    nights ? `Got it—${nights} night${nights>1?'s':''}.` : `Got it.`,
+                    `Sounds good.`,
+                    `Alright.`
+                ];
+                const opener = one(openers);
+
+                const pieces = [];
+                pieces.push(`I found a place that should fit.`);
+                const facts = [];
+                if (beds) facts.push(`${beds} bed${beds>1?'s':''}`);
+                if (baths) facts.push(`${baths} bath${baths>1?'s':''}`);
+                if (rating && reviews) facts.push(`rated ${rating.toFixed(2)} from ${reviews} reviews`);
+                if (facts.length) pieces.push(facts.join(', ') + '.');
+                if (priceTotal && nights) pieces.push(`It comes to about ${priceTotal} for ${nights} night${nights>1?'s':''}.`);
+
+                const alts = [ 'closer', 'cheaper', 'quieter' ];
+                const ask = ctx?.preference || one(alts);
+                const ctas = [
+                    `Want me to book this, or should I find something ${ask}?`,
+                    `Does that location work, or should I tighten the radius?`,
+                    `Shall I hold this, or compare two similar spots?`
+                ];
+                const cta = one(ctas);
+
+                return `${opener} ${pieces.join(' ')} ${cta}`.replace(/\s{2,}/g, ' ').trim();
+            }
+
+            // Fallback to cleaned server text
+            return cleanForUI(data?.text || '');
+        }
+
+        function makeConversationalReply(data) {
+            const ctx = { preference: undefined };
+            return conversationalOffer(ctx, data);
+        }
+
+        function updateMicButton(state) {
+            if (state === 'start') {
+                micBtn.textContent = '🎤 Start Conversation';
+                micBtn.dataset.state = 'start';
+            } else if (state === 'end') {
+                micBtn.textContent = '🛑 End Conversation';
+                micBtn.dataset.state = 'end';
+            }
+        }
+
+        // Ensure the mic button initializes correctly
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMicButton('start');
+        });
+
+        if (recognizer) {
+            recognizer.continuous = true; // Enable continuous listening
+            recognizer.interimResults = true; // Provide real-time transcription
+
+            recognizer.onstart = () => updateMicButton('end');
+            recognizer.onend = () => {
+                // If user still wants to be in 'end' (listening) state, keep restarting
+                if (micBtn.dataset.state === 'end') {
+                    try {
+                        recognizer.start();
+                    } catch (err) {
+                        console.warn('Failed to restart recognition:', err);
+                        updateMicButton('start');
+                    }
+                } else {
+                    updateMicButton('start');
+                }
+            };
+
+            recognizer.onresult = async (e) => {
+                const transcript = Array.from(e.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+
+                if (e.results[e.results.length - 1].isFinal) {
+                    addMessage(transcript, true); // Add user message to chat UI
+                    const payload = {
+                        message: transcript,
+                        context: { session_id: sessionId }
+                    };
+                    try {
+                        const res = await fetch('/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+
+                        const conversationalResponse = makeConversationalReply(data);
+                        addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || []);
+                        say(conversationalResponse); // Speak the bot's reply
+                    } catch (error) {
+                        addMessage('Sorry, something went wrong. Please try again.', false);
+                    }
+                }
+            };
+
+            recognizer.onerror = (e) => {
+                console.error('SpeechRecognition error:', e);
+                updateMicButton('start');
+            };
+        }
+
+        micBtn.addEventListener('click', () => {
+            if (recognizer) {
+                const currentState = micBtn.dataset.state;
+                if (currentState === 'start') {
+                    recognizer.start();
+                    updateMicButton('end');
+                } else if (currentState === 'end') {
+                    recognizer.stop();
+                    updateMicButton('start');
+                }
+            }
+        });
+
         function addMessage(text, isUser, itinerary = null, quickReplies = []) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
@@ -519,7 +716,8 @@
                 });
                 
                 const data = await response.json();
-                addMessage(data.text, false, data.itinerary, data.quick_replies || []);
+                const conversationalResponse = makeConversationalReply(data);
+                addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || []);
                 
             } catch (error) {
                 addMessage('Sorry, something went wrong. Please try again.', false);
@@ -529,6 +727,67 @@
                 input.focus();
             }
         }
+
+        async function sendTextToTTS() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            try {
+                const response = await fetch('http://localhost:3000/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch audio from TTS endpoint');
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to process text-to-speech. Please try again.');
+            }
+        }
+
+    document.getElementById('sendBtn').addEventListener('click', sendTextToTTS);
+
+        async function initializeConversation() {
+            const micBtn = document.getElementById('micBtn');
+
+            try {
+                micBtn.textContent = '🤔 Thinking...'; // Show loading state
+                micBtn.disabled = true; // Disable button during loading
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Start conversation', context: { session_id: sessionId } })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to initialize conversation');
+                }
+
+                const data = await response.json();
+                addMessage(data.text, false); // Display bot's response
+            } catch (error) {
+                console.error('Error initializing conversation:', error);
+                alert('Failed to start the conversation. Please try again.');
+            } finally {
+                micBtn.textContent = '🎤 Start Conversation'; // Reset button text
+                micBtn.disabled = false; // Re-enable button
+            }
+        }
+
+    // Do not bind initializeConversation to the mic button to avoid conflicting click behavior
     </script>
 </body>
 </html>
