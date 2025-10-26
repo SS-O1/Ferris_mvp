@@ -6,4 +6,4 @@ __pycache__/
 *.log
 ferris-476302-3ba4b3e58f23.json
 ferris-476304-0f8e7aba7efc.json
-.env
+node_modules/
