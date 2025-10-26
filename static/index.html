@@ -242,30 +242,33 @@ body.conversation-active .input-panel {
     box-shadow: none;
 }
 
-.mic-btn {
-    padding: 0.6rem;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 50%;
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 1.1rem;
-}
+        .mic-btn {
+            padding: 0.6rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-.mic-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: scale(1.05);
-}
+        .mic-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
 
-.mic-btn.listening {
-    background: #ff4444;
-    animation: pulse 1.5s ease-in-out infinite;
-}
+        .mic-btn.listening {
+            background: #ff4444;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .mic-icon {
+            width: 18px;
+            height: 18px;
+        }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
@@ -893,7 +896,7 @@ body.booking-complete .input-area {
                         onkeypress="if(event.key==='Enter') sendMessage()"
                     />
                     <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
-                        🎤
+                        <img src="/static/microphone.png" alt="Microphone" class="mic-icon">
                     </button>
                 </div>
                 <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
