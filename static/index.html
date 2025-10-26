@@ -664,7 +664,7 @@ body.booking-complete .input-area {
             gap: 0.75rem;
             margin: 1rem 0;
         }
-        
+
         .amenity {
             background: rgba(255, 255, 255, 0.08);
             padding: 0.5rem 1rem;
@@ -672,6 +672,23 @@ body.booking-complete .input-area {
             font-size: 0.85rem;
             color: var(--soft-white);
             font-weight: 300;
+        }
+
+        .vibe-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0 0;
+        }
+
+        .vibe-tag {
+            background: rgba(245, 216, 167, 0.18);
+            color: var(--accent-warm);
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
         }
         
         .pricing-section {
@@ -681,6 +698,52 @@ body.booking-complete .input-area {
             padding-top: 1rem;
             margin-top: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .transport-section {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .transport-header {
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted-white);
+        }
+
+        .transport-origin {
+            font-size: 0.9rem;
+            color: var(--muted-white);
+        }
+
+        .transport-option {
+            display: grid;
+            gap: 0.35rem;
+            padding: 0.85rem 1rem;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .transport-option-title {
+            font-weight: 600;
+            color: var(--soft-white);
+        }
+
+        .transport-option-meta {
+            font-size: 0.9rem;
+            color: var(--muted-white);
+        }
+
+        .transport-option-notes {
+            font-size: 0.9rem;
+            color: var(--soft-white);
         }
 
         .itinerary-actions {
@@ -785,6 +848,14 @@ body.booking-complete .input-area {
 
             .property-content {
                 padding: 1.5rem;
+            }
+
+            .transport-section {
+                padding: 1.1rem;
+            }
+
+            .transport-option {
+                padding: 0.75rem 0.85rem;
             }
         }
     </style>
@@ -1049,6 +1120,9 @@ body.booking-complete .input-area {
                 const stay = itinerary.stay;
                 const nights = itinerary.nights || 2;
                 const itineraryId = itinerary.id || '';
+                const transport = itinerary.transportation;
+                const transportOption = transport?.option || (transport?.options ? transport.options[0] : null);
+                const transportOptions = transport?.options || (transportOption ? [transportOption] : []);
 
                 content += `
                     <div class="itinerary-card">
@@ -1082,6 +1156,12 @@ body.booking-complete .input-area {
                             <div class="amenities">
                                 ${stay.amenities.slice(0, 5).map(a => `<span class="amenity">${a}</span>`).join('')}
                             </div>
+
+                            ${Array.isArray(stay.vibe) && stay.vibe.length ? `
+                                <div class="vibe-tags">
+                                    ${stay.vibe.slice(0, 3).map(tag => `<span class="vibe-tag">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
                             
                             <div class="pricing-section">
                                 <div class="price-breakdown">
@@ -1089,6 +1169,21 @@ body.booking-complete .input-area {
                                     <div class="total-price">$${itinerary.total_price.toFixed(0)}</div>
                                 </div>
                             </div>
+
+                            ${transportOptions.length ? `
+                                <div class="transport-section">
+                                    <div class="transport-header">Getting there from ${transport?.origin || 'your home base'}</div>
+                                    ${transportOptions.slice(0, 1).map(option => `
+                                        <div class="transport-option">
+                                            <div class="transport-option-title">${option.label}</div>
+                                            <div class="transport-option-meta">
+                                                ${[option.duration, option.distance, option.cost].filter(Boolean).join(' · ')}
+                                            </div>
+                                            ${option.highlights ? `<div class="transport-option-notes">${option.highlights}</div>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
 
                             <div class="itinerary-actions">
                                 <button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>
@@ -1221,12 +1316,41 @@ body.booking-complete .input-area {
                 ? `<div class="confirmation-details">${detailItems.join('')}</div>`
                 : '';
 
+            let transportHtml = '';
+            const transport = itinerary?.transportation;
+            const transportOption = transport?.option || (transport?.options ? transport.options[0] : null);
+            const transportDisplay = transportOption ? [transportOption] : (transport?.options || []);
+            if (transportDisplay.length) {
+                const optionList = transportDisplay.slice(0, 1).map(option => `
+                    <div class="transport-option">
+                        <div class="transport-option-title">${option.label}</div>
+                        <div class="transport-option-meta">
+                            ${[option.duration, option.distance, option.cost].filter(Boolean).join(' · ')}
+                        </div>
+                        ${option.highlights ? `<div class="transport-option-notes">${option.highlights}</div>` : ''}
+                    </div>
+                `).join('');
+
+                transportHtml = `
+                    <div class="transport-section">
+                        <div class="transport-header">Getting there from ${transport?.origin || 'your home base'}</div>
+                        ${optionList}
+                    </div>
+                `;
+            }
+
             panel.innerHTML = `
                 <div class="confirmation-card">
                     <div class="confirmation-heading">Reservation On Hold</div>
                     ${holdCode ? `<div class="confirmation-code">Confirmation ${holdCode}</div>` : ''}
                     <div class="confirmation-message">${messageHtml}</div>
                     ${detailsHtml}
+                    ${Array.isArray(stay.vibe) && stay.vibe.length ? `
+                        <div class="vibe-tags">
+                            ${stay.vibe.slice(0, 3).map(tag => `<span class="vibe-tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    ${transportHtml}
                     <button class="restart-btn" type="button" onclick="window.location.reload()">Plan another trip</button>
                 </div>
             `;

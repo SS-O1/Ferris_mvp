@@ -1,0 +1,225 @@
+{
+  "trip_overview": {
+    "departure_city": "Berkeley, California",
+    "destination": "Cancun, Mexico",
+    "departure_date": "2026-04-17",
+    "return_date": "2026-04-26",
+    "num_travelers": 3
+  },
+  
+  "flight_options": {
+    "outbound_flights": [
+      {
+        "option": 1,
+        "airline": "Alaska Airlines",
+        "flight_numbers": ["AS 1473", "AS 887"],
+        "route": "OAK → LAX → CUN",
+        "departure_time": "06:15 AM",
+        "arrival_time": "05:42 PM",
+        "duration": "8h 27m",
+        "stops": 1,
+        "layover": "LAX (2h 15m)",
+        "price_total": 1461,
+        "price_per_person": 487,
+        "baggage": {
+          "carry_on": "Included",
+          "checked": "1st bag $35, 2nd bag $45"
+        }
+      },
+      {
+        "option": 2,
+        "airline": "United Airlines",
+        "flight_number": "UA 1822",
+        "route": "SFO → CUN",
+        "departure_time": "10:30 AM",
+        "arrival_time": "06:45 PM",
+        "duration": "5h 15m",
+        "stops": 0,
+        "price_total": 1176,
+        "price_per_person": 392,
+        "baggage": {
+          "carry_on": "Personal item only",
+          "checked": "1st bag $40, 2nd bag $50"
+        }
+      },
+      {
+        "option": 3,
+        "airline": "Southwest Airlines",
+        "flight_number": "WN 2417",
+        "route": "OAK → CUN",
+        "departure_time": "08:45 AM",
+        "arrival_time": "05:12 PM",
+        "duration": "5h 27m",
+        "stops": 0,
+        "price_total": 1335,
+        "price_per_person": 445,
+        "baggage": {
+          "carry_on": "Included",
+          "checked": "2 bags included FREE"
+        },
+        "recommended": true,
+        "notes": "Best value - includes 2 free checked bags"
+      }
+    ],
+    
+    "return_flights": [
+      {
+        "option": 1,
+        "airline": "Alaska Airlines",
+        "flight_numbers": ["AS 888", "AS 1472"],
+        "route": "CUN → LAX → OAK",
+        "departure_time": "07:20 AM",
+        "arrival_time": "02:15 PM",
+        "duration": "9h 55m",
+        "stops": 1,
+        "included_in_outbound": true
+      },
+      {
+        "option": 2,
+        "airline": "United Airlines",
+        "flight_number": "UA 1823",
+        "route": "CUN → SFO",
+        "departure_time": "07:50 AM",
+        "arrival_time": "12:15 PM",
+        "duration": "5h 25m",
+        "stops": 0,
+        "included_in_outbound": true
+      },
+      {
+        "option": 3,
+        "airline": "Southwest Airlines",
+        "flight_number": "WN 2418",
+        "route": "CUN → OAK",
+        "departure_time": "06:35 AM",
+        "arrival_time": "11:10 AM",
+        "duration": "5h 35m",
+        "stops": 0,
+        "included_in_outbound": true,
+        "recommended": true
+      }
+    ]
+  },
+  
+  "berkeley_to_airport": {
+    "to_oakland_airport": [
+      {
+        "type": "BART + AirBART Shuttle",
+        "duration": "45-60 minutes",
+        "cost_per_person": 12,
+        "total_cost": 36,
+        "instructions": "BART from Downtown Berkeley to Coliseum, then AirBART",
+        "recommended": true
+      },
+      {
+        "type": "Uber/Lyft",
+        "duration": "20-30 minutes",
+        "total_cost": 55,
+        "notes": "Price varies by demand"
+      },
+      {
+        "type": "Personal Vehicle Parking",
+        "duration": "20-25 minutes",
+        "parking_per_day": 30,
+        "total_10_days": 300
+      }
+    ],
+    
+    "to_san_francisco_airport": [
+      {
+        "type": "BART Direct",
+        "duration": "60-75 minutes",
+        "cost_per_person": 10.55,
+        "total_cost": 32,
+        "instructions": "BART from Downtown Berkeley to SFO",
+        "recommended": true
+      },
+      {
+        "type": "Uber/Lyft",
+        "duration": "35-50 minutes",
+        "total_cost": 75
+      }
+    ]
+  },
+  
+  "cancun_airport_to_hotels": {
+    "shared_shuttle": {
+      "provider": "Canada Transfers",
+      "cost_per_person_roundtrip": 28,
+      "total_cost": 84,
+      "duration": "30-45 minutes",
+      "advance_booking": "Required"
+    },
+    
+    "private_transfer": {
+      "provider": "USA Transfers / Canada Transfers",
+      "cost_roundtrip": 95,
+      "duration": "20-30 minutes",
+      "vehicle": "Private sedan or van",
+      "advance_booking": "Required",
+      "recommended": true,
+      "notes": "Direct to hotel, no stops"
+    },
+    
+    "official_taxi": {
+      "cost_one_way": "55-70 USD",
+      "cost_roundtrip_estimate": 125,
+      "duration": "25-35 minutes",
+      "notes": "Pay at official booth inside airport"
+    },
+    
+    "rental_car": {
+      "companies": ["Hertz", "Avis", "Budget", "National"],
+      "cost_per_day": "45-75 USD",
+      "total_9_days": 540,
+      "insurance_required": true,
+      "insurance_per_day": "25-40 USD",
+      "notes": "Mexican car insurance mandatory"
+    }
+  },
+  
+  "recommended_package": {
+    "berkeley_to_oak": {
+      "method": "BART + AirBART",
+      "cost": 36
+    },
+    "flights": {
+      "airline": "Southwest Airlines roundtrip",
+      "cost": 1335,
+      "benefits": "Includes 2 free checked bags"
+    },
+    "cancun_transfers": {
+      "method": "Private transfer",
+      "cost": 95
+    },
+    "total_transportation_cost": 1466,
+    "per_person_cost": 489
+  },
+  
+  "cost_comparison": {
+    "budget_option": {
+      "description": "BART + Southwest + Shared Shuttle",
+      "total": 1455,
+      "per_person": 485
+    },
+    "recommended_option": {
+      "description": "BART + Southwest + Private Transfer",
+      "total": 1466,
+      "per_person": 489
+    },
+    "premium_option": {
+      "description": "Uber + United Nonstop + Private Transfer",
+      "total": 1346,
+      "per_person": 449,
+      "notes": "Fastest but no free checked bags"
+    }
+  },
+  
+  "travel_tips": [
+    "Book flights 2-3 months in advance for best prices",
+    "Southwest includes 2 free checked bags - best for families",
+    "Private transfer recommended over taxi for safety",
+    "Pre-book airport transfers for guaranteed service",
+    "BART is most economical option to airports",
+    "Arrive at airport 3 hours early for international flights"
+  ]
+}

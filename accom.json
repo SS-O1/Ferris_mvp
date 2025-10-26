@@ -1,0 +1,201 @@
+{
+  "travel_database": {
+    "destinations": [
+      {
+        "destination_id": "dest_001",
+        "name": "Cancun, Quintana Roo, Mexico",
+        "region": "Mexico",
+        "trip_overview": {
+          "check_in": "2026-04-17",
+          "check_out": "2026-04-26",
+          "num_nights": 9,
+          "num_adults": 3,
+          "num_rooms": 2
+        },
+        "weather": {
+          "average_high_f": 89,
+          "average_low_f": 74,
+          "ocean_temp": "80-81°F",
+          "conditions": "Dry season, sunny, perfect beach weather"
+        },
+        "properties": [
+          {
+            "source": "Hotel",
+            "property_id": "h100",
+            "name": "The Westin Resort & Spa, Cancun",
+            "star_rating": 4.0,
+            "property_type": "Beachfront Resort",
+            "address": {
+              "street": "Boulevard Kukulcan Km 20",
+              "city": "Cancun",
+              "postal_code": "77500",
+              "distance_from_airport": "9.3 miles (15 min)"
+            },
+            "ratings": {
+              "overall": 8.6,
+              "num_reviews": 5887,
+              "cleanliness": 9.1,
+              "service": 8.8,
+              "location": 8.9,
+              "value": 7.8
+            },
+            "accommodation": {
+              "room_type": "Standard Ocean View Room",
+              "room_size_sqft": 420,
+              "max_occupancy": 4,
+              "bed_configuration": "King or Two Queens",
+              "balcony": true,
+              "view": "Ocean View"
+            },
+            "pricing": {
+              "nightly_rate": 315,
+              "num_nights": 9,
+              "total_cost_usd": 7616,
+              "currency": "USD"
+            },
+            "amenities": [
+              "4 outdoor pools",
+              "Full-service spa",
+              "Free WiFi",
+              "Tennis courts",
+              "Water sports"
+            ],
+            "tags": {
+              "all_inclusive": false,
+              "adults_only": false
+            }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "h1823032",
+            "name": "Ocean Coral & Turquesa All Inclusive",
+            "star_rating": 5.0,
+            "property_type": "All-Inclusive Beachfront Resort",
+            "pricing": {
+              "nightly_rate": 356,
+              "total_cost_usd": 6413
+            },
+            "tags": {
+              "all_inclusive": true,
+              "adults_only": false
+            }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "h12210",
+            "name": "The Westin Lagunamar Ocean Resort Villas & Spa",
+            "star_rating": 4.0,
+            "pricing": {
+              "nightly_rate": 233,
+              "total_cost_usd": 5147
+            },
+            "tags": {
+              "eco_certified": true
+            }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "h101124286",
+            "name": "Hyatt Vivid Grand Island Cancun",
+            "star_rating": 4.5,
+            "pricing": {
+              "nightly_rate": 765,
+              "total_cost_usd": 13778
+            },
+            "tags": {
+              "adults_only": true,
+              "all_inclusive": true
+            }
+          }
+        ],
+        "hotel_comparison": {
+          "most_affordable": {
+            "name": "Westin Lagunamar",
+            "total": 5147
+          },
+          "best_all_inclusive_value": {
+            "name": "Ocean Coral & Turquesa",
+            "total": 6413
+          },
+          "highest_rated": {
+            "name": "Westin Lagunamar",
+            "rating": 9.0
+          },
+          "most_luxurious": {
+            "name": "Hyatt Vivid Grand Island",
+            "total": 13778
+          }
+        }
+      },
+      {
+        "destination_id": "dest_002",
+        "name": "Lake Tahoe, USA",
+        "region": "California/Nevada",
+        "search_info": {
+          "search_date": "2025-10-25",
+          "check_in": "2025-12-19",
+          "check_out": "2025-12-22",
+          "num_nights": 3,
+          "num_adults": 4
+        },
+        "properties": [
+          {
+            "source": "Airbnb",
+            "listing_id": "46690528",
+            "title": "Quiet and Cozy Stay in Tahoe City",
+            "location": "Tahoe City, California",
+            "rating": 4.82,
+            "num_reviews": 172,
+            "bedrooms": 2,
+            "beds": 3,
+            "bathrooms": 1.5,
+            "max_guests": 5,
+            "pricing": {
+              "nightly_rate": 285,
+              "total_price": 1047,
+              "currency": "USD"
+            },
+            "host": "Sarah & Michael",
+            "superhost": true,
+            "amenities": [
+              "Multiple pools",
+              "Tennis courts",
+              "Near beaches",
+              "WiFi",
+              "Free parking"
+            ]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "1392159224096068592",
+            "title": "Modern Kings Beach Sanctuary",
+            "rating": 4.91,
+            "nightly_rate": 425,
+            "total_price": 1587,
+            "max_guests": 8,
+            "host": "Jennifer",
+            "superhost": true
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "685550870183462995",
+            "title": "Lake Tahoe Epic Marla Bay Condo - private beach",
+            "rating": 4.76,
+            "nightly_rate": 395,
+            "total_price": 1478,
+            "host": "Robert & Lisa"
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "8631105",
+            "title": "Big Rock Fun - Beach Goers - Close to the Village",
+            "rating": 4.88,
+            "nightly_rate": 375,
+            "total_price": 1412,
+            "host": "David"
+          }
+        ]
+      }
+    ]
+  }
+}

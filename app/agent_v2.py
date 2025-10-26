@@ -9,6 +9,7 @@ from .conversation_flow import (
 from .airbnb_scraper import search_airbnb
 from .ranker import rank_listings
 from .llm import LLMNotConfiguredError, generate_brand_response
+from .transport import get_transportation_options
 
 def process_message(message: str, session: Any) -> Dict[str, Any]:
     """
@@ -69,7 +70,8 @@ def update_context_from_message(context: ConversationContext, message: str):
         "san diego", "lake tahoe", "tahoe", "napa", "big sur", "santa cruz",
         "malibu", "monterey", "yosemite", "mammoth", "joshua tree", "sonoma",
         "san francisco", "los angeles", "santa barbara", "carmel", "mendocino",
-        "ojai", "healdsburg", "paso robles", "sequoia", "oakland", "tahoe city", "big bear"
+        "ojai", "healdsburg", "paso robles", "sequoia", "oakland", "tahoe city", "big bear",
+        "cancun", "riviera maya", "tulum", "playa del carmen"
     ]
     for dest in destinations:
         if dest in msg:
@@ -79,9 +81,14 @@ def update_context_from_message(context: ConversationContext, message: str):
                 context.slots["destination"] = "San Francisco"
             elif dest == "la" or dest == "los angeles":
                 context.slots["destination"] = "Los Angeles"
+            elif dest in {"cancun", "riviera maya", "tulum", "playa del carmen"}:
+                context.slots["destination"] = "Cancun"
             else:
                 context.slots["destination"] = dest.title()
             break
+
+    if not context.slots["destination"] and "spring break" in msg:
+        context.slots["destination"] = "Cancun"
     
     # Update dates with simple keywords
     if any(word in msg for word in ["this weekend", "next weekend", "weekend", "flexible"]):
@@ -172,6 +179,10 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         }
     
     # Rank and get THE best one
+    if context.slots.get("destination") and "cancun" in context.slots["destination"].lower():
+        if hasattr(session, "slots"):
+            session.slots.origin = "Berkeley, California"
+
     origin = getattr(session.slots, 'origin', 'SFO') if hasattr(session, 'slots') else "SFO"
     
     # Build intent for ranker
@@ -227,14 +238,25 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
             "url": best["url"],
             "amenities": best["amenities"],
             "cancellation_policy": best["cancellation_policy"],
-            "guests_max": best["guests_max"]
+            "guests_max": best["guests_max"],
+            "vibe": best.get("vibe", []),
+            "description": best.get("description", "")
         },
         "total_price": total_price,
         "currency": "USD",
         "nights": nights,
         "why_this_property": generate_recommendation_reason(best, context)
     }
-    
+
+    transport_origin = "Berkeley, CA"
+    transport_options = get_transportation_options(transport_origin, context.slots["destination"])
+    recommended_transport = _select_transport_option(context.slots.get("activity"), transport_options)
+    if recommended_transport:
+        itinerary["transportation"] = {
+            "origin": transport_origin,
+            "option": recommended_transport,
+        }
+
     session.last_itinerary = itinerary
     
     # Build response
@@ -258,6 +280,22 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         f"and head out with {profile['travel_party']}, we leaned into {profile['trip_style']}."
     )
     
+    alternative_options: list[dict[str, Any]] = []
+    for alt in ranked:
+        if alt["id"] == best["id"]:
+            continue
+        alternative_options.append(
+            {
+                "name": alt["name"],
+                "price_per_night": alt["price_per_night"],
+                "rating": alt["rating"],
+                "url": alt["url"],
+                "vibe": alt.get("vibe", []),
+            }
+        )
+        if len(alternative_options) >= 3:
+            break
+
     fallback_lines = [
         upbeat_intro,
         headline,
@@ -272,10 +310,38 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         fallback_lines.extend([why_text, ""])
     fallback_lines.extend(
         [
-            f"💰 ${total_price:.0f} total ({nights} nights × ${best['price_per_night']:.0f})",
-            f"🛏️ {best['beds']} beds, {best['baths']} baths",
-            f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
-            f"✨ {profile['signature_move'].capitalize()}",
+            f"Total: ${total_price:.0f} ({nights} nights × ${best['price_per_night']:.0f})",
+            f"Layout: {best['beds']} beds · {best['baths']} baths",
+            f"Review score: {best['rating']}/5 ({best['review_count']} reviews)",
+            f"Signature fit: {profile['signature_move']}",
+        ]
+    )
+
+    vibe_tags = best.get("vibe")
+    if vibe_tags:
+        fallback_lines.append(f"Vibe: {', '.join(vibe_tags)}")
+
+    if recommended_transport:
+        fallback_lines.extend(
+            [
+                "",
+                "Getting there:",
+                f"- {recommended_transport['label']} · {recommended_transport['duration']} · {recommended_transport['cost']}",
+                f"  {recommended_transport['highlights']}",
+            ]
+        )
+
+    if alternative_options:
+        fallback_lines.append("")
+        fallback_lines.append("Other contenders if you want a backup:")
+        for alt in alternative_options:
+            vibe_fragment = f" · {alt['vibe'][0]}" if alt.get("vibe") else ""
+            price_label = alt['price_per_night']
+            price_text = f"${price_label:.0f}/night" if price_label else "ask for rates"
+            fallback_lines.append(f"- {alt['name']} ({price_text}{vibe_fragment})")
+
+    fallback_lines.extend(
+        [
             "",
             "Ready when you are—tap the Book button below or tell me what to tweak.",
         ]
@@ -305,7 +371,14 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         },
         "why_this_property": why_text,
         "fallback_copy": fallback_text,
+        "catalog_options": alternative_options,
     }
+
+    if recommended_transport:
+        llm_payload["transportation"] = {
+            "origin": transport_origin,
+            "options": [recommended_transport],
+        }
 
     text = generate_brand_response(llm_payload)
 
@@ -415,30 +488,80 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
             "url": best["url"],
             "amenities": best["amenities"],
             "cancellation_policy": best["cancellation_policy"],
-            "guests_max": best["guests_max"]
+            "guests_max": best["guests_max"],
+            "vibe": best.get("vibe", []),
+            "description": best.get("description", "")
         },
         "total_price": total_price,
         "currency": "USD",
         "nights": nights,
         "why_this_property": f"Alternative option: {tradeoff}"
     }
+
+    transport_origin = "Berkeley, CA"
+    transport_options = get_transportation_options(transport_origin, context.slots["destination"])
+    recommended_transport = _select_transport_option(context.slots.get("activity"), transport_options)
+    if recommended_transport:
+        itinerary["transportation"] = {
+            "origin": transport_origin,
+            "option": recommended_transport,
+        }
     
     session.last_itinerary = itinerary
     
+    alternative_options: list[dict[str, Any]] = []
+    for alt in available:
+        if alt["id"] == best["id"]:
+            continue
+        alternative_options.append(
+            {
+                "name": alt["name"],
+                "price_per_night": alt["price_per_night"],
+                "rating": alt["rating"],
+                "url": alt["url"],
+                "vibe": alt.get("vibe", []),
+            }
+        )
+        if len(alternative_options) >= 3:
+            break
+
     fallback_lines = [
-        "Totally hear you—let's try this vibe instead! 🔄",
+        "Totally hear you—let's try this vibe instead!",
         "",
         f"**{best['name']}**",
         "",
-        f"📊 Trade-off: {tradeoff}",
-        f"💡 Keeps things comfy for {profile['travel_party']} without straying from your usual ${profile['avg_budget']:.0f} game plan.",
+        f"Trade-off: {tradeoff}",
+        f"Keeps things comfy for {profile['travel_party']} without straying from your usual ${profile['avg_budget']:.0f} game plan.",
         "",
-        f"💰 ${total_price:.0f} total",
-        f"🛏️ {best['beds']} beds, {best['baths']} baths",
-        f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
-        "",
-        "Tap Book below if this is the one.",
+        f"Total: ${total_price:.0f}",
+        f"Layout: {best['beds']} beds · {best['baths']} baths",
+        f"Review score: {best['rating']}/5 ({best['review_count']} reviews)",
     ]
+
+    vibe_tags = best.get("vibe")
+    if vibe_tags:
+        fallback_lines.append(f"Vibe: {', '.join(vibe_tags)}")
+
+    if recommended_transport:
+        fallback_lines.extend(
+            [
+                "",
+                "Getting there:",
+                f"- {recommended_transport['label']} · {recommended_transport['duration']} · {recommended_transport['cost']}",
+                f"  {recommended_transport['highlights']}",
+            ]
+        )
+
+    if alternative_options:
+        fallback_lines.append("")
+        fallback_lines.append("Other contenders worth a peek:")
+        for alt in alternative_options[:3]:
+            vibe_fragment = f" · {alt['vibe'][0]}" if alt.get("vibe") else ""
+            price_label = alt['price_per_night']
+            price_text = f"${price_label:.0f}/night" if price_label else "ask for rates"
+            fallback_lines.append(f"- {alt['name']} ({price_text}{vibe_fragment})")
+
+    fallback_lines.extend(["", "Tap Book below if this is the one."])
     fallback_text = "\n".join(fallback_lines)
 
     llm_payload = {
@@ -461,7 +584,14 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
             "url": best["url"],
         },
         "fallback_copy": fallback_text,
+        "catalog_options": alternative_options,
     }
+
+    if recommended_transport:
+        llm_payload["transportation"] = {
+            "origin": transport_origin,
+            "options": [recommended_transport],
+        }
 
     text = generate_brand_response(llm_payload)
     
@@ -472,3 +602,23 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
         "needed": [],
         "quick_replies": []
     }
+def _select_transport_option(activity: str | None, options: list[dict[str, str]]) -> dict[str, str] | None:
+    if not options:
+        return None
+
+    preferences = {
+        "ski": ["car", "bus", "train_bus"],
+        "relaxing": ["train_bus", "bus", "car"],
+        "wine": ["car", "train_bus", "bus"],
+        "beach": ["car", "bus", "train_bus"],
+        "city": ["train_bus", "bus", "car"],
+    }
+
+    modes = preferences.get(activity or "", [])
+    if modes:
+        for mode in modes:
+            for option in options:
+                if option.get("mode") == mode:
+                    return option
+
+    return options[0]

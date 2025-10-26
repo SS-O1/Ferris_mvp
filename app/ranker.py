@@ -28,8 +28,9 @@ def rank_listings(listings: List[Dict[str, Any]], intent: Dict[str, Any], origin
     for listing in listings:
         score = 100.0
         
-        nights = 2
-        total_price = listing["price_per_night"] * nights
+        nights = intent.get("nights") or 2
+        price_per_night = listing.get("price_per_night") or 0
+        total_price = price_per_night * nights
         
         # Budget fit
         if intent.get("budget_max"):
@@ -43,8 +44,10 @@ def rank_listings(listings: List[Dict[str, Any]], intent: Dict[str, Any], origin
             continue
         
         # Rating boost
-        score += (listing["rating"] - 4.0) * 10
-        score += min(10, listing["review_count"] / 10)
+        rating = listing.get("rating") or 0
+        review_count = listing.get("review_count") or 0
+        score += (rating - 4.0) * 10
+        score += min(10, review_count / 10)
         
         # Distance preference
         dist_km = haversine(
@@ -57,8 +60,8 @@ def rank_listings(listings: List[Dict[str, Any]], intent: Dict[str, Any], origin
             score -= 5
         
         # Beds/baths quality
-        score += listing["beds"] * 2
-        score += listing["baths"] * 3
+        score += (listing.get("beds") or 0) * 2
+        score += (listing.get("baths") or 0) * 3
         
         scored.append({
             "score": score,

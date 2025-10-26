@@ -62,6 +62,8 @@ def generate_brand_response(payload: Dict[str, Any]) -> str:
         "Close with exactly three punchy bullet highlights (each under 10 words). "
         "Tone: optimistic, encouraging, confident, never over-the-top. "
         "Always reference why the recommendation matches prior travel patterns when provided. "
+        "If transportation options are supplied, nod to the strongest one with the key benefit (duration or comfort). "
+        "When catalog options are supplied, mention one alternative by name and why it might be a backup fit. "
         "Do not fabricate data beyond what is supplied in the payload. "
         "Do not use emojis or emoticons anywhere in the response."
     )
