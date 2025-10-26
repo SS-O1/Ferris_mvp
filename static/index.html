@@ -75,6 +75,26 @@
             color: rgba(255, 255, 255, 0.85);
             pointer-events: none;
         }
+
+        /* Mute button in the top-right corner */
+        .mute-top {
+            position: fixed;
+            top: 1.25rem;
+            right: 2.5rem;
+            z-index: 6;
+            background: rgba(255,255,255,0.06);
+            color: var(--soft-white);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 0.55rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+        }
+
+        .mute-top:hover {
+            background: rgba(255,255,255,0.09);
+        }
         
         .interface {
             width: min(900px, 92vw);
@@ -170,6 +190,14 @@
             letter-spacing: 0.05em;
             cursor: pointer;
             transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        /* Voice button styling */
+        .input-panel .voice-btn {
+            padding: 1.05rem 2rem;
+            border-radius: 22px;
+            font-size: 0.95rem;
+            white-space: nowrap;
         }
         
         .input-panel button:hover {
@@ -502,13 +530,13 @@
         </div>
 
         <div class="input-panel">
-            <button id="micBtn" title="Start or stop voice">🎤</button>
             <input 
                 type="text" 
                 id="messageInput" 
                 placeholder="Tell us about your next trip..."
                 onkeypress="if(event.key==='Enter') sendMessage()"
             />
+            <button id="voiceBtn" class="voice-btn">Start Listening</button>
             <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
         </div>
     </div>
@@ -548,16 +576,50 @@
             recognizer.continuous = true;
         }
 
-        const micBtn = document.getElementById('micBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+
+        // Keep a reference to the currently playing audio
+        let currentAudio = null;
+        // Mute toggle state for TTS
+        let isMuted = false;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const muteBtn = document.getElementById('muteBtn');
+            if (muteBtn) muteBtn.textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
+            // If muting while audio is playing, stop it immediately
+            if (isMuted && currentAudio) {
+                try { currentAudio.pause(); currentAudio.currentTime = 0; } catch (_e) {}
+            }
+        }
 
         function playDeepgramTTS(text) {
             try {
+                // Respect mute state
+                if (isMuted) return;
+
+                // Stop the currently playing audio if it exists
+                if (currentAudio) {
+                    try { currentAudio.pause(); currentAudio.currentTime = 0; } catch (_e) {}
+                }
+
                 const src = `http://localhost:3000/tts?text=${encodeURIComponent(text)}`;
                 const audio = new Audio();
                 audio.crossOrigin = 'anonymous';
                 audio.src = src;
                 audio.play().catch(err => {
                     console.warn('Autoplay blocked or error playing TTS:', err);
+                });
+
+                // Set the new audio as the current audio
+                currentAudio = audio;
+
+                // Clear reference when playback ends
+                audio.addEventListener('ended', () => {
+                    if (currentAudio === audio) currentAudio = null;
+                });
+                audio.addEventListener('error', () => {
+                    if (currentAudio === audio) currentAudio = null;
                 });
             } catch (error) {
                 console.error('Error starting TTS playback:', error);
@@ -607,15 +669,37 @@
             const ctx = { preference: undefined };
             return conversationalOffer(ctx, data);
         }
-        function updateMicButton(state) {
-            if (!micBtn) return;
-            if (state === 'start') { micBtn.textContent = '🎤 Start Conversation'; micBtn.dataset.state = 'start'; }
-            else if (state === 'end') { micBtn.textContent = '🛑 End Conversation'; micBtn.dataset.state = 'end'; }
+        
+        function updateVoiceButton(isListening) {
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (!voiceBtn) return;
+            
+            if (isListening) {
+                voiceBtn.textContent = 'Stop Listening';
+                voiceBtn.dataset.listening = 'true';
+            } else {
+                voiceBtn.textContent = 'Start Listening';
+                voiceBtn.dataset.listening = 'false';
+            }
         }
-        document.addEventListener('DOMContentLoaded', () => { updateMicButton('start'); });
-        if (recognizer && micBtn) {
-            recognizer.onstart = () => updateMicButton('end');
-            recognizer.onend = () => updateMicButton('start');
+        document.addEventListener('DOMContentLoaded', () => {
+            updateVoiceButton(false);
+            // Add a mute button to the top-right corner (if not already present)
+            try {
+                if (!document.getElementById('muteBtn')) {
+                    const muteBtn = document.createElement('button');
+                    muteBtn.id = 'muteBtn';
+                    muteBtn.type = 'button';
+                    muteBtn.className = 'mute-top';
+                    muteBtn.textContent = '🔊 Mute';
+                    muteBtn.addEventListener('click', toggleMute);
+                    document.body.appendChild(muteBtn);
+                }
+            } catch (_e) { /* non-fatal */ }
+        });
+        if (recognizer && voiceBtn) {
+            recognizer.onstart = () => updateVoiceButton(true);
+            recognizer.onend = () => updateVoiceButton(false);
             recognizer.onresult = async (e) => {
                 const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
                 if (e.results[e.results.length - 1].isFinal) {
@@ -623,19 +707,26 @@
                     try {
                         const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: transcript, context: { session_id: sessionId } }) });
                         const data = await res.json();
-                        const conversationalResponse = makeConversationalReply(data);
-                        addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || []);
-                        say(conversationalResponse);
+                        // Keep original server response text in the UI and TTS
+                        addMessage(data.text, false, data.itinerary, data.state || null);
+                        if (data?.text) { say(data.text); }
                     } catch (err) {
                         addMessage('Sorry, something went wrong. Please try again.', false);
                     }
                 }
             };
-            recognizer.onerror = () => updateMicButton('start');
-            micBtn.addEventListener('click', () => {
-                const currentState = micBtn.dataset.state;
-                if (currentState === 'start') { try { recognizer.start(); } catch(_){} }
-                else { try { recognizer.stop(); } catch(_){} }
+            recognizer.onerror = () => updateVoiceButton(false);
+            voiceBtn.addEventListener('click', () => {
+                const isListening = voiceBtn.dataset.listening === 'true';
+                if (!isListening) { 
+                    try { 
+                        recognizer.start(); 
+                    } catch(_){} 
+                } else { 
+                    try { 
+                        recognizer.stop(); 
+                    } catch(_){} 
+                }
             });
         }
 
@@ -748,8 +839,8 @@
                 const data = await response.json();
                 responseData = data;
                 success = response.ok;
-                const conversationalResponse = makeConversationalReply(data);
-                addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || data.state || null);
+                // Keep original server response text in the UI
+                addMessage(data.text, false, data.itinerary, data.state || null);
                 
             } catch (error) {
                 addMessage('Sorry, something went wrong. Please try again.', false);
@@ -788,11 +879,12 @@
         // TTS is triggered automatically via say() on bot responses; no need to override send button behavior
 
         async function initializeConversation() {
-            const micBtn = document.getElementById('micBtn');
+            const voiceBtn = document.getElementById('voiceBtn');
 
             try {
-                micBtn.textContent = '🤔 Thinking...'; // Show loading state
-                micBtn.disabled = true; // Disable button during loading
+                const originalText = voiceBtn.textContent;
+                voiceBtn.textContent = '🤔 Thinking...';
+                voiceBtn.disabled = true;
 
                 const response = await fetch('/chat', {
                     method: 'POST',
@@ -805,13 +897,13 @@
                 }
 
                 const data = await response.json();
-                addMessage(data.text, false); // Display bot's response
+                addMessage(data.text, false);
             } catch (error) {
                 console.error('Error initializing conversation:', error);
                 alert('Failed to start the conversation. Please try again.');
             } finally {
-                micBtn.textContent = '🎤 Start Conversation'; // Reset button text
-                micBtn.disabled = false; // Re-enable button
+                voiceBtn.textContent = 'Start Listening';
+                voiceBtn.disabled = false;
             }
         }
 

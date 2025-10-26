@@ -11,55 +11,6 @@ const DEEPGRAM_API_KEY = "1ed5a7a9fc3732359b2bc702275b3e68ab0fa9a6";
 // Reuse TLS connections to Deepgram for faster requests
 const keepAliveAgent = new https.Agent({ keepAlive: true });
 
-// Basic text normalization to make TTS sound natural
-function normalizeForTTS(raw) {
-    if (!raw) return "";
-    let text = String(raw);
-
-    // 1) Remove markdown formatting (bold/italic/code/strikethrough)
-    text = text.replace(/[*_`~]+/g, "");
-
-    // 2) Replace common iconography/emojis with words (keep short and natural)
-    const replacements = [
-        [/🔄/g, " alternatively, "],
-        [/📊/g, " note: "],
-        [/🛏️|🛏/g, " beds "],
-        [/💰/g, " cost "],
-        [/⭐️|⭐/g, " rated "],
-    ];
-    for (const [pattern, repl] of replacements) text = text.replace(pattern, repl);
-
-    // 3) Ratings like "rated 4.55/5 (76 reviews)" -> "rated 4.55 out of 5 from 76 reviews"
-    text = text.replace(/rated\s*(\d+(?:\.\d+)?)\s*\/(\d+)/i, (m, a, b) => `rated ${a} out of ${b}`);
-    text = text.replace(/\((\d+)\s*reviews\)/i, (m, n) => ` from ${n} reviews`);
-
-    // 4) "Type BOOK to reserve" -> "Say "book" to reserve"
-    text = text.replace(/type\s+book\b/gi, 'say "book"');
-
-    // 5) Replace bullets/dashes with sentence breaks
-    text = text.replace(/[•\-]\s+/g, ". ");
-
-    // 6) Remove any remaining standalone emojis/special pictographs (best-effort)
-    try {
-        // Remove extended pictographic characters
-        text = text.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, "");
-    } catch (_) {
-        // Fallback small set if Unicode property escapes not supported
-        text = text.replace(/[\u2600-\u27BF\u1F300-\u1FAFF]/g, "");
-    }
-
-    // 7) Tone down exclamation for TTS prosody
-    text = text.replace(/!+/g, ".");
-
-    // 8) Collapse excessive whitespace and ensure sentence spacing
-    text = text.replace(/\s{2,}/g, " ").trim();
-
-    // 9) Ensure there is a period at end if looks like a sentence list
-    if (!/[.!?]$/.test(text)) text += ".";
-
-    return text;
-}
-
 // Enable CORS
 app.use(cors());
 
@@ -67,7 +18,6 @@ app.use(cors());
 app.post("/tts", express.json(), async (req, res) => {
     let { text } = req.body || {};
     if (!text) return res.status(400).json({ error: "Text input is required." });
-    text = normalizeForTTS(text);
 
     try {
         const dgResponse = await axios.post(
@@ -141,6 +91,12 @@ app.get("/tts", async (req, res) => {
         res.status(500).json({ error: "Failed to process text-to-speech." });
     }
 });
+
+// Define normalizeForTTS function to handle text normalization
+function normalizeForTTS(text) {
+    // Example normalization logic: trim whitespace and ensure proper punctuation
+    return text.trim().replace(/\s+/g, ' ').replace(/([a-zA-Z])$/, '$1.');
+}
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Ferris Realtime API Server!');
