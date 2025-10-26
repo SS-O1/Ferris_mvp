@@ -85,6 +85,42 @@
             color: rgba(255, 255, 255, 0.85);
             pointer-events: none;
         }
+
+        .tts-toggle {
+            position: fixed;
+            top: 2.5rem;
+            right: 4vw;
+            z-index: 5;
+            padding: 0.75rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            backdrop-filter: blur(16px);
+            color: var(--soft-white);
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tts-toggle:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .tts-toggle.disabled {
+            opacity: 0.6;
+            background: rgba(40, 35, 30, 0.65);
+        }
+
+        .tts-toggle .icon {
+            font-size: 1.1rem;
+        }
         
         .interface {
             width: min(900px, 92vw);
@@ -168,16 +204,32 @@ body.conversation-active .input-panel {
     padding: 0.9rem;
 }
 
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    padding-right: 0.5rem;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
 .input-panel input {
     flex: 1;
     padding: 1.1rem 1.5rem;
     border: none;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
     font-size: 1rem;
     font-weight: 300;
     color: white;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
+    transition: none;
 }
         
 .input-panel input::placeholder {
@@ -186,8 +238,38 @@ body.conversation-active .input-panel {
 
 .input-panel input:focus {
     outline: none;
-    background: rgba(0, 0, 0, 0.35);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+    background: transparent;
+    box-shadow: none;
+}
+
+.mic-btn {
+    padding: 0.6rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.mic-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: scale(1.05);
+}
+
+.mic-btn.listening {
+    background: #ff4444;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.08); }
 }
 
 .input-panel button {
@@ -720,6 +802,13 @@ body.booking-complete .input-area {
                 letter-spacing: 0.14em;
             }
 
+            .tts-toggle {
+                top: 1.5rem;
+                right: 6vw;
+                padding: 0.65rem 1.25rem;
+                font-size: 0.85rem;
+            }
+
             .hero-title {
                 letter-spacing: 0.04em;
                 text-align: center;
@@ -778,6 +867,10 @@ body.booking-complete .input-area {
     </video>
     <div class="video-overlay"></div>
     <div class="branding">Ferris</div>
+    <button class="tts-toggle" id="ttsToggle" onclick="toggleTTS()">
+        <span class="icon">🔊</span>
+        <span class="label">Voice On</span>
+    </button>
     
     <div class="interface">
         <h1 class="hero-title">Let us plan your <br><span>next adventure</span></h1>
@@ -792,12 +885,17 @@ body.booking-complete .input-area {
                 <span class="typing-dots"><span></span><span></span><span></span></span>
             </div>
             <div class="input-panel">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    placeholder="Tell us about your next trip..."
-                    onkeypress="if(event.key==='Enter') sendMessage()"
-                />
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Tell us about your next trip..."
+                        onkeypress="if(event.key==='Enter') sendMessage()"
+                    />
+                    <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice input">
+                        🎤
+                    </button>
+                </div>
                 <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
             </div>
         </div>
@@ -806,6 +904,149 @@ body.booking-complete .input-area {
     <script>
         let sessionId = 'session_' + Date.now();
         let hasShownRefinePrompt = false;
+        let currentAudio = null; // Track current audio playback
+        let ttsEnabled = true; // TTS is enabled by default
+        let recognition = null; // Speech recognition instance
+        let isListening = false; // Track listening state
+        
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    isListening = true;
+                    const micBtn = document.getElementById('micBtn');
+                    micBtn.classList.add('listening');
+                    micBtn.title = 'Listening... Click to stop';
+                };
+                
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    const input = document.getElementById('messageInput');
+                    if (finalTranscript) {
+                        input.value = finalTranscript;
+                    } else if (interimTranscript) {
+                        input.value = interimTranscript;
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    stopListening();
+                    if (event.error === 'not-allowed') {
+                        alert('Microphone access denied. Please enable microphone permissions.');
+                    }
+                };
+                
+                recognition.onend = function() {
+                    stopListening();
+                };
+            } else {
+                console.warn('Speech recognition not supported in this browser');
+            }
+        }
+        
+        function toggleSpeechRecognition() {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            
+            if (!recognition) {
+                alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+        
+        function stopListening() {
+            isListening = false;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.remove('listening');
+            micBtn.title = 'Voice input';
+        }
+        
+        // Toggle TTS on/off
+        function toggleTTS() {
+            ttsEnabled = !ttsEnabled;
+            const button = document.getElementById('ttsToggle');
+            const icon = button.querySelector('.icon');
+            const label = button.querySelector('.label');
+            
+            if (ttsEnabled) {
+                button.classList.remove('disabled');
+                icon.textContent = '🔊';
+                label.textContent = 'Voice On';
+            } else {
+                button.classList.add('disabled');
+                icon.textContent = '🔇';
+                label.textContent = 'Voice Off';
+                // Stop any currently playing audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+            }
+        }
+        
+        // Function to speak text using Deepgram TTS
+        async function speakText(text) {
+            // Don't speak if TTS is disabled
+            if (!ttsEnabled) return;
+            
+            // Stop any currently playing audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            if (!text || text.trim().length === 0) return;
+            
+            try {
+                // Create audio element
+                currentAudio = new Audio();
+                
+                // Set the source to our TTS endpoint with the text as query parameter
+                const encodedText = encodeURIComponent(text);
+                currentAudio.src = `http://localhost:3000/tts?text=${encodedText}`;
+                
+                // Play the audio
+                await currentAudio.play();
+                
+                // Clean up when audio ends
+                currentAudio.addEventListener('ended', () => {
+                    currentAudio = null;
+                });
+                
+                currentAudio.addEventListener('error', (e) => {
+                    console.error('Audio playback error:', e);
+                    currentAudio = null;
+                });
+                
+            } catch (error) {
+                console.error('Error with text-to-speech:', error);
+            }
+        }
         
         function renderMarkdown(text) {
             const escaped = (text || '')
@@ -860,6 +1101,20 @@ body.booking-complete .input-area {
             
             const htmlText = renderMarkdown(text);
             let content = `<div class="message-content">${htmlText}`;
+            
+            // Speak the bot's message (but not user messages)
+            if (!isUser && text) {
+                // Strip markdown and HTML for cleaner speech
+                const cleanText = text
+                    .replace(/\*\*(.+?)\*\*/g, '$1')  // Remove bold
+                    .replace(/\*(.+?)\*/g, '$1')      // Remove italic
+                    .replace(/`(.+?)`/g, '$1')        // Remove code
+                    .replace(/[-*•]\s+/g, '. ')       // Convert bullets to periods
+                    .replace(/\n+/g, ' ')             // Replace newlines with spaces
+                    .trim();
+                
+                speakText(cleanText);
+            }
             
             if (itinerary) {
                 const stay = itinerary.stay;
