@@ -1,7 +1,10 @@
 from __future__ import annotations
-from typing import Dict, Any
+import re
+from typing import Dict, Any, List, Optional
+from datetime import datetime
 from .conversation_flow import (
     ConversationContext,
+    generate_clarification,
     resolve_date_input,
     parse_guest_count,
     ConversationState,
@@ -10,48 +13,82 @@ from .airbnb_scraper import search_airbnb
 from .ranker import rank_listings
 from .llm import LLMNotConfiguredError, generate_brand_response
 
+
 def process_message(message: str, session: Any) -> Dict[str, Any]:
     """
-    Enhanced agent with conversation flow
+    Production-ready agent with intelligent conversation flow
+    Features:
+    - Step-by-step clarification questions
+    - Smart refinement handling (cheaper, bigger, smaller, different)
+    - Fuzzy date parsing with spelling correction
+    - Natural language understanding
+    - Beautiful LLM-powered responses with fallbacks
     """
     session.last_user_message = message
     
-    # Initialize conversation context if not exists
+    # Initialize conversation context
     if not hasattr(session, 'conversation_context'):
         session.conversation_context = ConversationContext()
     
     context = session.conversation_context
     msg_lower = message.lower().strip()
     
-    # Handle refinement requests
+    # Handle refinement requests (when user wants to tweak the recommendation)
     if context.state.value == "showing_result" and hasattr(session, 'last_itinerary'):
-        if any(word in msg_lower for word in ["cheaper", "budget", "less expensive", "too expensive"]):
+        
+        # Price refinements
+        if any(word in msg_lower for word in ["cheaper", "budget", "less expensive", "too expensive", "lower price", "save money"]):
             return handle_refinement(session, "cheaper")
-        elif any(word in msg_lower for word in ["bigger", "more beds", "more space"]):
+        
+        # Size refinements - BIGGER
+        elif any(word in msg_lower for word in ["bigger", "more beds", "more space", "more room", "larger", "spacious"]):
             return handle_refinement(session, "bigger")
-        elif any(word in msg_lower for word in ["different", "something else", "another", "other option"]):
+        
+        # Size refinements - SMALLER (NEW!)
+        elif any(word in msg_lower for word in ["smaller", "fewer beds", "less space", "only need", "just need", "don't need", "too big", "right size"]):
+            return handle_refinement(session, "smaller")
+        
+        # Different location/property
+        elif any(word in msg_lower for word in ["different", "something else", "another", "other option", "show me more", "not this one"]):
             return handle_refinement(session, "different")
     
-    # Update context with new message and auto-complete missing info
+    # Update context from user message
     update_context_from_message(context, message)
-    auto_complete_missing_slots(context)
     
-    # Ready to search immediately
+    # Check if we need to ask clarifying questions
+    if not context.is_ready_to_search():
+        clarification = generate_clarification(context, message)
+        
+        if clarification["action"] == "clarify":
+            return {
+                "text": clarification["question"],
+                "itinerary": None,
+                "state": "COLLECTING_SLOTS",
+                "needed": [clarification["collecting"]],
+                "quick_replies": clarification.get("quick_replies", [])
+            }
+    
+    # All info collected - execute search!
     return execute_search(context, session)
 
+
 def update_context_from_message(context: ConversationContext, message: str):
-    """Extract and update slots from user message"""
-    msg = message.lower()
+    """
+    Enhanced slot extraction with fuzzy matching and natural language understanding
+    """
+    msg = message.lower().strip()
     
-    # Capture activity cues early to influence downstream defaults
+    # Extract activity/intent early (hiking, beach, skiing, etc.)
     activity = context.extract_activity(message)
     if activity:
         context.slots["activity"] = activity
     
-    # If we're waiting for custom dates or user entered something with numbers, try to parse as date
+    # Handle custom date input with fuzzy parsing
     if context.waiting_for_custom_dates or (not context.slots["check_in"] and any(char.isdigit() for char in msg)):
-        # Check if it looks like a date input (has month name or numbers)
-        looks_like_date = any(month in msg for month in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]) or "/" in msg or "-" in msg
+        looks_like_date = any(month in msg for month in [
+            "jan", "feb", "mar", "apr", "may", "jun", 
+            "jul", "aug", "sep", "oct", "nov", "dec"
+        ]) or "/" in msg or "-" in msg
         
         if looks_like_date:
             context.waiting_for_custom_dates = False
@@ -59,21 +96,24 @@ def update_context_from_message(context: ConversationContext, message: str):
                 check_in, check_out = resolve_date_input(message)
                 context.slots["check_in"] = check_in
                 context.slots["check_out"] = check_out
-                return  # Exit early after parsing dates
+                return
             except Exception as e:
                 print(f"Date parsing failed: {e}")
-                # Continue to other parsing if date parsing fails
+                # Continue to other parsing
     
-    # Update destination - more comprehensive
+    # Comprehensive destination extraction
     destinations = [
         "san diego", "lake tahoe", "tahoe", "napa", "big sur", "santa cruz",
         "malibu", "monterey", "yosemite", "mammoth", "joshua tree", "sonoma",
         "san francisco", "los angeles", "santa barbara", "carmel", "mendocino",
-        "ojai", "healdsburg", "paso robles", "sequoia", "oakland", "tahoe city", "big bear"
+        "ojai", "healdsburg", "paso robles", "sequoia", "oakland", "tahoe city", 
+        "big bear", "palm springs", "santa monica", "laguna beach", "half moon bay"
     ]
+    
     for dest in destinations:
         if dest in msg:
-            if dest == "tahoe":
+            # Normalize destination names
+            if dest == "tahoe" or dest == "tahoe city":
                 context.slots["destination"] = "Lake Tahoe"
             elif dest == "sf" or dest == "san francisco":
                 context.slots["destination"] = "San Francisco"
@@ -83,63 +123,41 @@ def update_context_from_message(context: ConversationContext, message: str):
                 context.slots["destination"] = dest.title()
             break
     
-    # Update dates with simple keywords
+    # Date keywords (this weekend, next weekend, etc.)
     if any(word in msg for word in ["this weekend", "next weekend", "weekend", "flexible"]):
         check_in, check_out = resolve_date_input(message)
         context.slots["check_in"] = check_in
         context.slots["check_out"] = check_out
     
-    # Update guests - comprehensive extraction
-    if any(word in msg for word in ["people", "guests", "person", "just me", "solo", "couple", "group", "family"]):
+    # Guest count extraction - ENHANCED
+    # Check for keywords first
+    if any(word in msg for word in ["people", "guests", "person", "just me", "solo", "couple", "group", "family", "adults", "friends"]):
         context.slots["guests"] = parse_guest_count(message)
     
-    # Also check for standalone numbers that might be guest count
-    import re
+    # Check for numbers with keywords (e.g., "5 people")
     if context.slots["guests"] is None:
-        numbers = re.findall(r'\b(\d+)\s*(?:people|guests|adults|persons?)\b', msg)
+        numbers = re.findall(r'\b(\d+)\s*(?:people|guests|adults|persons?|friends?)\b', msg)
         if numbers:
             context.slots["guests"] = int(numbers[0])
     
-    # Update budget
+    # Check for standalone numbers (when asked "how many people?", user just says "5")
+    if context.slots["guests"] is None and msg.strip().isdigit():
+        context.slots["guests"] = int(msg.strip())
+    
+    # Budget extraction
     budget_match = re.search(r'under\s*\$?(\d+)', msg)
     if budget_match:
         context.slots["budget_max"] = float(budget_match.group(1))
+    
     budget_match2 = re.search(r'budget\s*\$?(\d+)', msg)
     if budget_match2:
         context.slots["budget_max"] = float(budget_match2.group(1))
 
 
-def auto_complete_missing_slots(context: ConversationContext) -> None:
-    """
-    Fill in any missing slots so we can always return a recommendation.
-    Placeholder for future ML-powered completion.
-    """
-    # Destination defaults by activity, falls back to a popular choice
-    activity_defaults = {
-        "beach": "San Diego",
-        "ski": "Lake Tahoe",
-        "wine": "Napa",
-        "hiking": "Big Sur",
-        "city": "San Francisco",
-        "relaxing": "Carmel",
-    }
-    
-    if not context.slots["destination"]:
-        context.slots["destination"] = activity_defaults.get(context.slots.get("activity")) or "San Diego"
-    
-    if not context.slots["check_in"] or not context.slots["check_out"]:
-        check_in, check_out = resolve_date_input("next weekend")
-        context.slots["check_in"] = check_in
-        context.slots["check_out"] = check_out
-    
-    if not context.slots["guests"]:
-        context.slots["guests"] = 2
-    
-    context.state = ConversationState.READY_TO_SEARCH
-
 def get_simulated_profile(session: Any) -> Dict[str, Any]:
     """
-    Placeholder insights until real historical trip modeling is wired up.
+    Simulated user profile for personalized messaging
+    In production, this would pull from user's trip history
     """
     if not hasattr(session, "profile"):
         session.profile = {
@@ -150,11 +168,15 @@ def get_simulated_profile(session: Any) -> Dict[str, Any]:
         }
     return session.profile
 
+
 def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]:
-    """Execute search and return THE recommendation"""
-    
+    """
+    Execute Airbnb search and return THE best recommendation
+    Uses Logan's beautiful personality + your smart logic
+    """
     profile = get_simulated_profile(session)
     
+    # Search Airbnb
     listings = search_airbnb(
         destination=context.slots["destination"],
         check_in=context.slots["check_in"],
@@ -162,19 +184,19 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         guests=context.slots["guests"]
     )
     
+    # Handle no results
     if not listings:
         return {
-            "text": f"Hmm, I couldn't find available places in {context.slots['destination']} for those dates. Try different dates?",
+            "text": f"Hmm, I couldn't find available places in {context.slots['destination']} for those dates. Want to try different dates or another destination?",
             "itinerary": None,
             "state": "FAILED",
             "needed": [],
-            "quick_replies": []
+            "quick_replies": ["This weekend", "Next weekend", "Different location"]
         }
     
-    # Rank and get THE best one
-    origin = getattr(session.slots, 'origin', 'SFO') if hasattr(session, 'slots') else "SFO"
+    # Rank listings and get THE best one
+    origin = getattr(session, 'origin', 'SFO') if hasattr(session, 'origin') else "SFO"
     
-    # Build intent for ranker
     intent = {
         "destination": context.slots["destination"],
         "check_in": context.slots["check_in"],
@@ -186,17 +208,18 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
     ranked = rank_listings(listings, intent, origin)
     best = ranked[0]
     
-    # Store for refinement
+    # Mark as shown (for refinements)
     context.shown_properties.append(best["id"])
     context.state = ConversationState.SHOWING_RESULT
     
     # Calculate pricing
-    from datetime import datetime
     check_in_date = datetime.fromisoformat(context.slots["check_in"])
     check_out_date = datetime.fromisoformat(context.slots["check_out"])
     nights = (check_out_date - check_in_date).days
     total_price = best["price_per_night"] * nights
     date_label = f"{check_in_date.strftime('%b %d')} – {check_out_date.strftime('%b %d')}"
+    
+    # Activity-based context
     activity_context = {
         "beach": "for a breezy beach escape",
         "ski": "for your ski weekend",
@@ -206,7 +229,7 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         "relaxing": "where you can truly unwind",
     }.get(context.slots.get("activity"))
     
-    # Build itinerary
+    # Build itinerary object
     itinerary = {
         "id": best["id"],
         "destination": context.slots["destination"],
@@ -232,19 +255,20 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         "total_price": total_price,
         "currency": "USD",
         "nights": nights,
-        "why_this_property": generate_recommendation_reason(best, context)
+        "why_this_property": generate_recommendation_reason(best, context, profile)
     }
     
     session.last_itinerary = itinerary
     
-    # Build response
+    # Build beautiful response with personality
     why_text = itinerary["why_this_property"]
     headline = f"{context.slots['destination']} · {date_label}"
-    lead_in = "Here’s what I’d book"
+    lead_in = "Here's what I'd book"
     if activity_context:
         lead_in += f" {activity_context}"
     lead_in += ":"
     
+    # Dynamic intro based on activity
     upbeat_intro = "That sounds like a blast!"
     if context.slots.get("activity") == "relaxing":
         upbeat_intro = "This is going to feel so restorative!"
@@ -252,12 +276,15 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         upbeat_intro = "Fresh powder and good vibes coming right up!"
     elif context.slots.get("activity") == "wine":
         upbeat_intro = "Tasting rooms and sunshine? Say no more!"
+    elif context.slots.get("activity") == "hiking":
+        upbeat_intro = "Trail time! You're going to love this."
     
     persona_line = (
         f"Since you usually budget around ${profile['avg_budget']:.0f} "
         f"and head out with {profile['travel_party']}, we leaned into {profile['trip_style']}."
     )
     
+    # Fallback text (used if LLM not configured)
     fallback_lines = [
         upbeat_intro,
         headline,
@@ -270,18 +297,18 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
     ]
     if why_text:
         fallback_lines.extend([why_text, ""])
-    fallback_lines.extend(
-        [
-            f"💰 ${total_price:.0f} total ({nights} nights × ${best['price_per_night']:.0f})",
-            f"🛏️ {best['beds']} beds, {best['baths']} baths",
-            f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
-            f"✨ {profile['signature_move'].capitalize()}",
-            "",
-            "Ready when you are—tap the Book button below or tell me what to tweak.",
-        ]
-    )
+    
+    fallback_lines.extend([
+        f"💰 ${total_price:.0f} total ({nights} nights × ${best['price_per_night']:.0f})",
+        f"🛏️ {best['beds']} beds, {best['baths']} baths",
+        f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
+        f"✨ {profile['signature_move'].capitalize()}",
+        "",
+        "Ready when you are—tap the Book button below or tell me what to tweak.",
+    ])
     fallback_text = "\n".join(fallback_lines)
 
+    # Try to use LLM for natural language generation
     llm_payload = {
         "user_request": getattr(session, "last_user_message", ""),
         "headline": headline,
@@ -320,41 +347,47 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         "quick_replies": []
     }
 
-def generate_recommendation_reason(property_data: Dict, context: ConversationContext) -> str:
-    """Generate personalized 'why this property' explanation"""
+
+def generate_recommendation_reason(property_data: Dict, context: ConversationContext, profile: Dict) -> str:
+    """
+    Generate personalized 'why this property' reasoning
+    """
     reasons = []
     
-    # Location-based
+    # Location highlight
     if property_data.get("coords"):
         reasons.append(f"Prime location in {context.slots['destination']}")
     
-    # Capacity
+    # Capacity matching
     if property_data["guests_max"] >= context.slots["guests"]:
         if context.slots["guests"] > 2:
             reasons.append(f"Plenty of space for your crew of {context.slots['guests']}")
         else:
-            reasons.append("Perfect cozy setup for two")
+            reasons.append(f"Perfect cozy setup for two")
     
-    # Rating
+    # Rating highlight
     if property_data["rating"] >= 4.7:
         reasons.append(f"Loved by guests ({property_data['rating']}/5)")
     
-    # Budget
+    # Budget alignment
     if context.slots.get("budget_max"):
-        nights = 2  # Default weekend
+        nights = 2
         total = property_data["price_per_night"] * nights
         if total <= context.slots["budget_max"]:
             under = context.slots["budget_max"] - total
             reasons.append(f"Under budget (saves you ${under:.0f})")
     
     if not reasons:
-        reasons.append("Hand-picked because it's the strongest match available right now")
+        reasons.append("Hand-picked as the strongest match right now")
     
-    return " • ".join(reasons[:3])  # Top 3 reasons
+    return " • ".join(reasons[:3])
+
 
 def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
-    """Handle user refinement requests"""
-    
+    """
+    Enhanced refinement handler with smart filtering
+    Supports: cheaper, bigger, smaller, different
+    """
     context = session.conversation_context
     previous = session.last_itinerary
     profile = get_simulated_profile(session)
@@ -367,32 +400,50 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
         guests=context.slots["guests"]
     )
     
-    # Filter out shown properties
+    # Filter out already shown properties
     available = [l for l in listings if l["id"] not in context.shown_properties]
     
     if not available:
         return {
-            "text": "That's all I have for those criteria. Want to try different dates or location?",
+            "text": "That's all I have for those criteria. Want to try different dates or a different location?",
             "itinerary": previous,
             "state": "AWAITING_CONSENT",
             "needed": [],
-            "quick_replies": []
+            "quick_replies": ["Different dates", "Different location", "Book this one"]
         }
     
-    # Apply refinement
+    # Apply refinement filter
     if refinement_type == "cheaper":
         available.sort(key=lambda x: x["price_per_night"])
         best = available[0]
-        tradeoff = f"${previous['total_price'] - (best['price_per_night'] * previous['nights']):.0f} cheaper"
+        nights = previous["nights"]
+        savings = previous['total_price'] - (best['price_per_night'] * nights)
+        tradeoff = f"${savings:.0f} cheaper"
     
     elif refinement_type == "bigger":
         available.sort(key=lambda x: x["beds"], reverse=True)
         best = available[0]
         tradeoff = f"{best['beds']} beds (vs {previous['stay']['beds']})"
     
+    elif refinement_type == "smaller":
+        # Filter for properties with fewer beds
+        smaller_props = [p for p in available if p["beds"] < previous['stay']['beds']]
+        
+        if not smaller_props:
+            # No smaller available - get cheapest instead
+            available.sort(key=lambda x: x["price_per_night"])
+            best = available[0]
+            tradeoff = "Closest match available (still great!)"
+        else:
+            # Sort by fewest beds, but prioritize good ratings
+            smaller_props.sort(key=lambda x: (x["beds"], -x["rating"]))
+            best = smaller_props[0]
+            bed_diff = previous['stay']['beds'] - best['beds']
+            tradeoff = f"{best['beds']} beds (right-sized, down {bed_diff} from before)"
+    
     else:  # different
         best = available[0]
-        tradeoff = "Different area"
+        tradeoff = "Different vibe and location"
     
     # Mark as shown
     context.shown_properties.append(best["id"])
@@ -423,58 +474,35 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
         "total_price": total_price,
         "currency": "USD",
         "nights": nights,
-        "why_this_property": f"Alternative option: {tradeoff}"
+        "why_this_property": f"Refined option: {tradeoff}"
     }
     
     session.last_itinerary = itinerary
     
-    fallback_lines = [
-        "Totally hear you—let's try this vibe instead! 🔄",
-        "",
-        f"**{best['name']}**",
-        "",
-        f"📊 Trade-off: {tradeoff}",
-        f"💡 Keeps things comfy for {profile['travel_party']} without straying from your usual ${profile['avg_budget']:.0f} game plan.",
-        "",
-        f"💰 ${total_price:.0f} total",
-        f"🛏️ {best['beds']} beds, {best['baths']} baths",
-        f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
-        "",
-        "Tap Book below if this is the one.",
-    ]
-    fallback_text = "\n".join(fallback_lines)
-
-    llm_payload = {
-        "user_request": getattr(session, "last_user_message", ""),
-        "refinement_type": refinement_type,
-        "profile": profile,
-        "tradeoff": tradeoff,
-        "itinerary": {
-            "name": best["name"],
-            "destination": context.slots["destination"],
-            "dates": itinerary["dates"],
-            "nights": nights,
-            "price_per_night": best["price_per_night"],
-            "total_price": total_price,
-            "beds": best["beds"],
-            "baths": best["baths"],
-            "rating": best["rating"],
-            "review_count": best["review_count"],
-            "amenities": best["amenities"][:6],
-            "url": best["url"],
-        },
-        "fallback_copy": fallback_text,
-    }
-
-    try:
-        text = generate_brand_response(llm_payload)
-    except LLMNotConfiguredError:
-        text = fallback_text
+    # Personalized response based on refinement type
+    if refinement_type == "smaller":
+        intro = f"Perfect! Let's right-size this for you. 🎯"
+    elif refinement_type == "cheaper":
+        intro = f"Totally hear you—let's save you some cash! 💰"
+    elif refinement_type == "bigger":
+        intro = f"More space coming right up! 🏡"
+    else:
+        intro = f"Let's try a different vibe! 🔄"
+    
+    fallback_text = (
+        f"{intro}\n\n"
+        f"**{best['name']}**\n\n"
+        f"📊 {tradeoff}\n\n"
+        f"💰 ${total_price:.0f} total\n"
+        f"🛏️ {best['beds']} beds, {best['baths']} baths\n"
+        f"⭐ {best['rating']}/5 ({best['review_count']} reviews)\n\n"
+        f"Tap Book if this is the one, or keep tweaking!"
+    )
     
     return {
-        "text": text,
+        "text": fallback_text,
         "itinerary": itinerary,
         "state": "AWAITING_CONSENT",
         "needed": [],
-        "quick_replies": []
+        "quick_replies": ["BOOK", "Show another", "Too expensive"]
     }
