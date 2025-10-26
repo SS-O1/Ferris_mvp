@@ -5,3 +5,5 @@ __pycache__/
 .DS_Store
 *.log
 ferris-476302-3ba4b3e58f23.json
+ferris-476304-0f8e7aba7efc.json
+.env
