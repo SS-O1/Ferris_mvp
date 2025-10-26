@@ -3,10 +3,14 @@ import cors from "cors";
 import http from "http";
 import axios from "axios";
 import https from "https";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
-const DEEPGRAM_API_KEY = "1ed5a7a9fc3732359b2bc702275b3e68ab0fa9a6";
+const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY || "1ed5a7a9fc3732359b2bc702275b3e68ab0fa9a6";
 
 // Reuse TLS connections to Deepgram for faster requests
 const keepAliveAgent = new https.Agent({ keepAlive: true });
