@@ -18,6 +18,11 @@
             --accent-warm: #F5D8A7;
             --user-bubble: rgba(229, 206, 178, 0.85);
             --user-text: #2A2015;
+            --bot-bubble-bg: rgba(17, 14, 18, 0.88);
+            --bot-bubble-border: rgba(245, 216, 167, 0.22);
+            --bot-text: #F8F5F0;
+            --confirmation-bg: rgba(14, 12, 17, 0.92);
+            --confirmation-border: rgba(245, 216, 167, 0.35);
         }
         
         body {
@@ -37,6 +42,11 @@
         body.conversation-active {
             padding: 3rem 0 2.5rem;
             justify-content: flex-start;
+        }
+
+        body.booking-complete {
+            padding: 6vh 0;
+            justify-content: center;
         }
         
         h1, h2, h3 {
@@ -94,6 +104,12 @@
             gap: 1.35rem;
             min-height: calc(100vh - 6rem);
         }
+
+        body.booking-complete .interface {
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
         
         .hero-title {
             font-size: clamp(2.4rem, 6vw, 3.8rem);
@@ -112,97 +128,154 @@
         body.conversation-active .hero-title {
             display: none;
         }
-        
-        .input-panel {
-            width: min(600px, 88vw);
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            background: var(--glass-bg);
-            border-radius: 28px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(16px);
-            padding: 0.75rem;
-            align-self: center;
-            margin-top: 0;
-        }
 
-        body.conversation-active .input-panel {
-            width: 100%;
-            max-width: 720px;
-            padding: 0.9rem;
-            margin-top: auto;
-            margin-bottom: 0;
-            align-self: center;
-        }
+body.booking-complete .hero-title {
+    display: none;
+}
 
-        .input-panel input {
-            flex: 1;
-            padding: 1.1rem 1.5rem;
-            border: none;
-            border-radius: 22px;
-            background: rgba(255, 255, 255, 0.08);
-            font-size: 1rem;
-            font-weight: 300;
-            color: white;
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .input-panel input::placeholder {
-            color: rgba(255, 255, 255, 0.55);
-        }
+.input-area {
+    width: min(720px, 92vw);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0.5rem;
+    align-self: center;
+}
 
-        .input-panel input:focus {
-            outline: none;
-            background: rgba(0, 0, 0, 0.35);
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
-        }
+body.conversation-active .input-area {
+    width: 100%;
+    max-width: 720px;
+    align-items: stretch;
+    margin-top: auto;
+}
 
-        .input-panel button {
-            padding: 1.05rem 2.5rem;
-            background: var(--accent-warm);
-            color: #1F150A;
-            border: none;
-            border-radius: 22px;
-            font-size: 1rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            transition: transform 0.2s ease, background 0.2s ease;
-        }
-        
-        .input-panel button:hover {
-            background: #f1ca82;
-            transform: translateY(-1px);
-        }
 
-        .input-panel button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+.input-panel {
+    flex: 0 1 100%;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: var(--glass-bg);
+    border-radius: 28px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(16px);
+    padding: 0.75rem;
+}
+
+body.conversation-active .input-panel {
+    padding: 0.9rem;
+}
+
+.input-panel input {
+    flex: 1;
+    padding: 1.1rem 1.5rem;
+    border: none;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 1rem;
+    font-weight: 300;
+    color: white;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
         
-        .typing-indicator {
-            display: none;
-            margin-top: 0.75rem;
-            color: var(--muted-white);
-            font-style: italic;
-            font-weight: 300;
-            font-size: 0.95rem;
-            align-self: center;
-        }
+.input-panel input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.input-panel input:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.input-panel button {
+    padding: 1.05rem 2.5rem;
+    background: var(--accent-warm);
+    color: #1F150A;
+    border: none;
+    border-radius: 22px;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
         
-        .typing-indicator.active {
-            display: block;
-        }
-        
-        body.conversation-active .typing-indicator {
-            align-self: flex-start;
-            text-align: left;
-            width: 100%;
-            padding-left: 0.35rem;
-        }
-        
+.input-panel button:hover {
+    background: #f1ca82;
+    transform: translateY(-1px);
+}
+
+.input-panel button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    color: var(--muted-white);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 0.95rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s ease, max-height 0.25s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    max-height: 0;
+    overflow: hidden;
+    align-self: stretch;
+    padding: 0 1.5rem;
+}
+
+body.conversation-active .typing-indicator {
+    align-self: stretch;
+    justify-content: flex-start;
+}
+
+.typing-indicator.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    max-height: 3rem;
+}
+
+body.booking-complete .input-area {
+    display: none !important;
+}
+.typing-dots {
+    display: inline-flex;
+    gap: 0.2rem;
+}
+
+.typing-dots span {
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.65);
+    opacity: 0.25;
+    animation: typingBlink 1.1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingBlink {
+    0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-2px); }
+}
+
         .messages {
             width: 100%;
             display: none;
@@ -217,6 +290,10 @@
             flex: 1 1 auto;
             overflow-y: auto;
             padding-right: 0.5rem;
+        }
+
+        body.booking-complete .messages {
+            display: none !important;
         }
 
         body.conversation-active .messages.active {
@@ -264,9 +341,10 @@
             line-height: 1.65;
             font-size: 0.94rem;
             font-weight: 300;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            background: var(--bot-bubble-bg);
+            border: 1px solid var(--bot-bubble-border);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            color: var(--bot-text);
         }
         
         .message-content p {
@@ -278,18 +356,143 @@
         }
         
         .message.bot .message-content {
-            color: var(--soft-white);
             max-width: 100%;
         }
         
         .message.user .message-content {
             background: var(--user-bubble);
-            color: var(--user-text);
+            color: #1c1208;
             border: none;
             max-width: 75%;
         }
 
-        
+        .message.user .message-content p,
+        .message.user .message-content ul.styled-bullets li {
+            color: #1c1208;
+        }
+
+        ul.styled-bullets {
+            list-style: none;
+            margin: 0.85rem 0 0.2rem;
+            padding-left: 0;
+        }
+
+        ul.styled-bullets li {
+            margin-bottom: 0.45rem;
+            padding-left: 1.4rem;
+            position: relative;
+            color: var(--bot-text);
+        }
+
+        ul.styled-bullets li::before {
+            content: '';
+            position: absolute;
+            left: 0.35rem;
+            top: 0.75em;
+            width: 0.45rem;
+            height: 0.45rem;
+            background: var(--accent-warm);
+            border-radius: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 0 2px rgba(245, 216, 167, 0.18);
+        }
+
+        ul.styled-bullets li strong {
+            color: var(--soft-white);
+        }
+
+        .confirmation-panel {
+            display: none;
+            width: min(540px, 92vw);
+            margin: 0 auto;
+        }
+
+        body.booking-complete .confirmation-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirmation-card {
+            background: var(--confirmation-bg);
+            border: 1px solid var(--confirmation-border);
+            border-radius: 28px;
+            padding: 2.5rem 2.25rem;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+            text-align: center;
+            color: var(--soft-white);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .confirmation-heading {
+            font-family: 'Crimson Pro', serif;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .confirmation-code {
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-warm);
+        }
+
+        .confirmation-message p {
+            color: var(--soft-white);
+            font-weight: 300;
+            line-height: 1.7;
+            margin-bottom: 0.75rem;
+        }
+
+        .confirmation-details {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem 1.75rem;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 18px;
+            padding: 1.5rem;
+        }
+
+        .confirmation-details .label {
+            display: block;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted-white);
+            margin-bottom: 0.3rem;
+        }
+
+        .confirmation-details .value {
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.35rem;
+            color: var(--soft-white);
+        }
+
+        .restart-btn {
+            align-self: center;
+            padding: 0.85rem 2.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: transparent;
+            color: var(--soft-white);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
         .itinerary-card {
             background: rgba(32, 28, 24, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -470,12 +673,25 @@
                 width: 100%;
             }
 
+            .typing-indicator {
+                align-self: stretch;
+                justify-content: flex-start;
+            }
+
             .messages {
                 max-height: 50vh;
             }
 
             .message-content {
                 max-width: 100%;
+            }
+
+            .confirmation-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .confirmation-details {
+                grid-template-columns: 1fr;
             }
 
             .property-content {
@@ -495,48 +711,75 @@
     <div class="interface">
         <h1 class="hero-title">Let us plan your <br><span>next adventure</span></h1>
         
+        <div class="confirmation-panel" id="confirmationPanel"></div>
+
         <div class="messages" id="messages"></div>
 
-        <div class="typing-indicator" id="typingIndicator">
-            Finding the perfect spot for you...
-        </div>
-
-        <div class="input-panel">
-            <input 
-                type="text" 
-                id="messageInput" 
-                placeholder="Tell us about your next trip..."
-                onkeypress="if(event.key==='Enter') sendMessage()"
-            />
-            <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
+        <div class="input-area">
+            <div class="typing-indicator" id="typingIndicator">
+                <span class="typing-label">Finding the perfect spot for you</span>
+                <span class="typing-dots"><span></span><span></span><span></span></span>
+            </div>
+            <div class="input-panel">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Tell us about your next trip..."
+                    onkeypress="if(event.key==='Enter') sendMessage()"
+                />
+                <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
+            </div>
         </div>
     </div>
     
     <script>
         let sessionId = 'session_' + Date.now();
+        let hasShownRefinePrompt = false;
         
         function renderMarkdown(text) {
             const escaped = (text || '')
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
-            
+
             let formatted = escaped
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.+?)\*/g, '<em>$1</em>')
                 .replace(/`(.+?)`/g, '<code>$1</code>');
 
-            let blocks = formatted.split(/\n{2,}/).map(block => block.trim());
-            blocks = blocks.filter(block => block.length > 0);
-            if (blocks.length === 0) {
-                blocks = [formatted.trim()];
+            formatted = formatted.replace(/(?:^|\n)([-*•]\s+.+(?:\n[-*•]\s+.+)*)/g, (block) => {
+                const items = block
+                    .trim()
+                    .split(/\n/)
+                    .map(line => line.replace(/^[-*•]\s+/, '').trim())
+                    .filter(Boolean);
+                if (!items.length) {
+                    return block;
+                }
+                const listHtml = items.map(item => `<li>${item}</li>`).join('');
+                return `\n<ul class="styled-bullets">${listHtml}</ul>\n`;
+            });
+
+            const blocks = formatted
+                .split(/\n{2,}/)
+                .map(block => block.trim())
+                .filter(block => block.length > 0);
+
+            if (!blocks.length) {
+                return formatted ? `<p>${formatted}</p>` : '';
             }
+
             return blocks
-                .map(block => `<p>${block.replace(/\n/g, '<br>')}</p>`)
+                .map(block => {
+                    if (block.startsWith('<ul')) {
+                        return block;
+                    }
+                    return `<p>${block.replace(/\n+/g, ' ').trim()}</p>`;
+                })
                 .join('');
         }
 
-        function addMessage(text, isUser, itinerary = null, state = null) {
+        function addMessage(text, isUser, itinerary = null) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
@@ -593,7 +836,7 @@
                             </div>
 
                             <div class="itinerary-actions">
-                                ${state === 'HOLDING' ? '' : `<button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>`}
+                                <button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>
                             </div>
                         </div>
                     </div>
@@ -607,6 +850,134 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
             document.body.classList.add('conversation-active');
         }
+
+        function formatDateRange(checkIn, checkOut) {
+            if (!checkIn || !checkOut) {
+                return '';
+            }
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+                return '';
+            }
+            const opts = { month: 'short', day: 'numeric' };
+            const startLabel = start.toLocaleDateString(undefined, opts);
+            const endLabel = end.toLocaleDateString(undefined, opts);
+            return `${startLabel} – ${endLabel}`;
+        }
+
+        function formatCurrency(value) {
+            const amount = typeof value === 'number' ? value : Number(value);
+            if (!Number.isFinite(amount)) {
+                return '';
+            }
+            return amount.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+        }
+
+        function showConfirmation(payload) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            messagesDiv.classList.remove('active');
+
+            document.body.classList.remove('conversation-active');
+            document.body.classList.add('booking-complete');
+
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.classList.remove('active');
+            }
+
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = '';
+                input.setAttribute('disabled', 'true');
+                input.blur();
+            }
+
+            const sendBtn = document.getElementById('sendBtn');
+            if (sendBtn) {
+                sendBtn.disabled = true;
+            }
+
+            const panel = document.getElementById('confirmationPanel');
+            const itinerary = payload?.itinerary || {};
+            const stay = itinerary?.stay || {};
+
+            const holdMatch = (payload?.text || '').match(/Confirmation #([A-Za-z0-9_-]+)/i);
+            const holdCode = holdMatch ? holdMatch[1] : '';
+
+            let confirmationText = payload?.text || '';
+            if (holdCode) {
+                const pattern = new RegExp(`\\s*Confirmation #${holdCode}\\s*`, 'i');
+                confirmationText = confirmationText.replace(pattern, ' ').replace(/\n{3,}/g, '\n\n').trim();
+            }
+            const messageHtml = renderMarkdown(confirmationText);
+
+            const dateRange = itinerary?.dates ? formatDateRange(itinerary.dates.check_in, itinerary.dates.check_out) : '';
+            const destination = itinerary?.destination || '';
+            const totalLabel = formatCurrency(itinerary?.total_price);
+            const nightsLabel = typeof itinerary?.nights === 'number' && Number.isFinite(itinerary.nights)
+                ? `${itinerary.nights} night${itinerary.nights === 1 ? '' : 's'}`
+                : '';
+
+            const detailItems = [];
+            if (destination) {
+                detailItems.push(`
+                    <div>
+                        <span class="label">Destination</span>
+                        <span class="value">${destination}</span>
+                    </div>
+                `);
+            }
+            if (dateRange) {
+                detailItems.push(`
+                    <div>
+                        <span class="label">Dates</span>
+                        <span class="value">${dateRange}</span>
+                    </div>
+                `);
+            }
+            if (stay?.name) {
+                detailItems.push(`
+                    <div>
+                        <span class="label">Stay</span>
+                        <span class="value">${stay.name}</span>
+                    </div>
+                `);
+            }
+            if (totalLabel || nightsLabel) {
+                detailItems.push(`
+                    <div>
+                        <span class="label">${totalLabel ? 'Trip Total' : 'Length'}</span>
+                        <span class="value">${totalLabel || nightsLabel}</span>
+                    </div>
+                `);
+                if (totalLabel && nightsLabel) {
+                    detailItems.push(`
+                        <div>
+                            <span class="label">Duration</span>
+                            <span class="value">${nightsLabel}</span>
+                        </div>
+                    `);
+                }
+            }
+
+            const detailsHtml = detailItems.length
+                ? `<div class="confirmation-details">${detailItems.join('')}</div>`
+                : '';
+
+            panel.innerHTML = `
+                <div class="confirmation-card">
+                    <div class="confirmation-heading">Reservation On Hold</div>
+                    ${holdCode ? `<div class="confirmation-code">Confirmation ${holdCode}</div>` : ''}
+                    <div class="confirmation-message">${messageHtml}</div>
+                    ${detailsHtml}
+                    <button class="restart-btn" type="button" onclick="window.location.reload()">Plan another trip</button>
+                </div>
+            `;
+
+            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         
         async function sendMessage(forcedMessage = null, options = {}) {
             const { echoUser = true } = options;
@@ -618,6 +989,13 @@
             
             if (echoUser) {
                 addMessage(message, true);
+                if (!hasShownRefinePrompt) {
+                    const refinePlaceholder = document.getElementById('messageInput');
+                    if (refinePlaceholder) {
+                        refinePlaceholder.placeholder = "Ask for tweaks like 'Make it cheaper' or 'Need more space'";
+                    }
+                    hasShownRefinePrompt = true;
+                }
             }
             
             if (forcedMessage === null) {
@@ -644,15 +1022,29 @@
                 
                 responseData = await response.json();
                 success = response.ok;
-                addMessage(responseData.text, false, responseData.itinerary, responseData.state);
+                if (responseData?.state === 'HOLDING') {
+                    showConfirmation(responseData);
+                } else {
+                    addMessage(responseData.text, false, responseData.itinerary);
+                }
                 
             } catch (error) {
                 addMessage('Sorry, something went wrong. Please try again.', false);
                 success = false;
             } finally {
                 document.getElementById('typingIndicator').classList.remove('active');
-                document.getElementById('sendBtn').disabled = false;
-                input.focus();
+                const sendBtn = document.getElementById('sendBtn');
+                if (document.body.classList.contains('booking-complete')) {
+                    if (sendBtn) {
+                        sendBtn.disabled = true;
+                    }
+                    input.blur();
+                } else {
+                    if (sendBtn) {
+                        sendBtn.disabled = false;
+                    }
+                    input.focus();
+                }
             }
 
             return { success, data: responseData };

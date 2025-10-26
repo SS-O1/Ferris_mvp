@@ -1,5 +1,9 @@
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,7 +72,7 @@ async def chat(req: ChatRequest):
         
         hold = STORE.place_hold(session.last_itinerary["id"])
         return ChatResponse(
-            text=f"🎉 Booked! Confirmation #{hold['hold_id']}\n\n(Demo mode - no real booking)\n\nIn production, this would charge your card and send confirmation email.",
+            text=f"Booked! Your flight information and accomodation booking have been emailed to you.",
             itinerary=session.last_itinerary,
             state="HOLDING",
             needed=[]

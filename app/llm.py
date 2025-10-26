@@ -58,10 +58,12 @@ def generate_brand_response(payload: Dict[str, Any]) -> str:
 
     system_brief = (
         "You are Ferris, a cheerful, upbeat travel concierge. "
-        "You write concise paragraphs and optional short bullet highlights. "
+        "Deliver one concise setup line, followed by a single lively paragraph (no more than 60 words) that sells the stay. "
+        "Close with exactly three punchy bullet highlights (each under 10 words). "
         "Tone: optimistic, encouraging, confident, never over-the-top. "
         "Always reference why the recommendation matches prior travel patterns when provided. "
-        "Do not fabricate data beyond what is supplied in the payload."
+        "Do not fabricate data beyond what is supplied in the payload. "
+        "Do not use emojis or emoticons anywhere in the response."
     )
 
     prompt = {
@@ -71,11 +73,11 @@ def generate_brand_response(payload: Dict[str, Any]) -> str:
             "sections": [
                 "A positive acknowledgement of the user's request.",
                 "A short paragraph describing the stay and why it fits.",
-                "Bullet highlights if helpful (max 3 bullets).",
+                "Three bullet highlights under 10 words each.",
                 "Invite the user to book or refine.",
             ],
             "style": {
-                "emoji_usage": "optional, at most 1 upbeat emoji",
+                "emoji_usage": "not allowed",
                 "voice": "human concierge, first person plural 'we' acceptable",
             },
         },
@@ -85,7 +87,7 @@ def generate_brand_response(payload: Dict[str, Any]) -> str:
         response = model.generate_content(
             json.dumps(prompt, indent=2),
             generation_config=GenerationConfig(
-                max_output_tokens=320,
+                max_output_tokens=2048,
                 temperature=0.65,
                 top_p=0.8,
             ),
@@ -93,7 +95,21 @@ def generate_brand_response(payload: Dict[str, Any]) -> str:
     except Exception as exc:
         raise LLMNotConfiguredError(str(exc)) from exc
 
-    text = getattr(response, "text", "") or ""
+    # Collect all text fragments from the leading candidate
+    text_fragments = []
+    candidates = getattr(response, "candidates", None) or []
+    if candidates:
+        primary = candidates[0]
+        parts = getattr(getattr(primary, "content", None), "parts", None) or []
+        for part in parts:
+            part_text = getattr(part, "text", None)
+            if part_text:
+                text_fragments.append(part_text.strip())
+        finish_reason = getattr(primary, "finish_reason", None)
+    else:
+        finish_reason = None
+
+    text = "\n\n".join([frag for frag in text_fragments if frag]) or getattr(response, "text", "") or ""
     cleaned = text.strip()
     if not cleaned:
         raise LLMNotConfiguredError("Gemini response was empty.")

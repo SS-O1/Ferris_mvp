@@ -307,10 +307,7 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
         "fallback_copy": fallback_text,
     }
 
-    try:
-        text = generate_brand_response(llm_payload)
-    except LLMNotConfiguredError:
-        text = fallback_text
+    text = generate_brand_response(llm_payload)
 
     return {
         "text": text,
@@ -466,10 +463,7 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
         "fallback_copy": fallback_text,
     }
 
-    try:
-        text = generate_brand_response(llm_payload)
-    except LLMNotConfiguredError:
-        text = fallback_text
+    text = generate_brand_response(llm_payload)
     
     return {
         "text": text,
