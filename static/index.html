@@ -11,22 +11,32 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --warm-bg: #FBF9F6;
-            --card-bg: #FFFFFF;
-            --warm-brown: #8B7355;
-            --soft-text: #3A3632;
-            --muted-text: #6B6562;
-            --light-border: #E8E3DD;
-            --accent-warm: #C4A57B;
+            --glass-bg: rgba(22, 19, 17, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.16);
+            --soft-white: rgba(255, 255, 255, 0.85);
+            --muted-white: rgba(255, 255, 255, 0.65);
+            --accent-warm: #F5D8A7;
+            --user-bubble: rgba(229, 206, 178, 0.85);
+            --user-text: #2A2015;
         }
         
         body {
             font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--warm-bg);
-            color: var(--soft-text);
+            color: white;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            position: relative;
+            background: #000;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 6vh 0;
+        }
+        
+        body.conversation-active {
+            padding: 3rem 0 2.5rem;
+            justify-content: flex-start;
         }
         
         h1, h2, h3 {
@@ -34,76 +44,209 @@
             font-weight: 400;
         }
         
-        .header {
-            background: var(--card-bg);
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid var(--light-border);
-        }
-        
-        .header-content {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .logo h1 {
-            font-size: 1.5rem;
-            color: var(--soft-text);
-            letter-spacing: 0.1em;
-        }
-        
-        .tagline {
-            color: var(--muted-text);
-            font-size: 0.875rem;
-            font-weight: 300;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+            filter: saturate(1.1);
         }
         
-        .chat-container {
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08);
+        .video-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(21, 13, 6, 0.42), rgba(6, 8, 20, 0.32));
+            backdrop-filter: blur(3px);
+            z-index: -1;
+        }
+
+        .branding {
+            position: fixed;
+            top: 2.5rem;
+            left: 4vw;
+            z-index: 5;
+            font-family: 'Crimson Pro', serif;
+            font-size: clamp(1.6rem, 2vw, 2.2rem);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.85);
+            pointer-events: none;
+        }
+        
+        .interface {
+            width: min(900px, 92vw);
             display: flex;
             flex-direction: column;
-            min-height: 600px;
+            align-items: center;
+            justify-content: center;
+            gap: 1.85rem;
+            margin: 0 auto;
+            padding: 0 4vw;
+            flex: 1;
+        }
+        
+        body.conversation-active .interface {
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 1.35rem;
+            min-height: calc(100vh - 6rem);
+        }
+        
+        .hero-title {
+            font-size: clamp(2.4rem, 6vw, 3.8rem);
+            letter-spacing: 0.08em;
+            line-height: 1.2;
+            color: var(--soft-white);
+            text-transform: uppercase;
+            text-align: center;
+            max-width: 22ch;
+        }
+        
+        .hero-title span {
+            color: var(--accent-warm);
+        }
+        
+        body.conversation-active .hero-title {
+            display: none;
+        }
+        
+        .input-panel {
+            width: min(600px, 88vw);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: var(--glass-bg);
+            border-radius: 28px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(16px);
+            padding: 0.75rem;
+            align-self: center;
+            margin-top: 0;
+        }
+
+        body.conversation-active .input-panel {
+            width: 100%;
+            max-width: 720px;
+            padding: 0.9rem;
+            margin-top: auto;
+            margin-bottom: 0;
+            align-self: center;
+        }
+
+        .input-panel input {
+            flex: 1;
+            padding: 1.1rem 1.5rem;
+            border: none;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 1rem;
+            font-weight: 300;
+            color: white;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .input-panel input::placeholder {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .input-panel input:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .input-panel button {
+            padding: 1.05rem 2.5rem;
+            background: var(--accent-warm);
+            color: #1F150A;
+            border: none;
+            border-radius: 22px;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        
+        .input-panel button:hover {
+            background: #f1ca82;
+            transform: translateY(-1px);
+        }
+
+        .input-panel button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .typing-indicator {
+            display: none;
+            margin-top: 0.75rem;
+            color: var(--muted-white);
+            font-style: italic;
+            font-weight: 300;
+            font-size: 0.95rem;
+            align-self: center;
+        }
+        
+        .typing-indicator.active {
+            display: block;
+        }
+        
+        body.conversation-active .typing-indicator {
+            align-self: flex-start;
+            text-align: left;
+            width: 100%;
+            padding-left: 0.35rem;
         }
         
         .messages {
-            flex: 1;
+            width: 100%;
+            display: none;
+        }
+
+        .messages.active {
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            color: var(--soft-white);
+            align-self: stretch;
+            flex: 1 1 auto;
             overflow-y: auto;
-            padding: 2.5rem 2rem;
+            padding-right: 0.5rem;
+        }
+
+        body.conversation-active .messages.active {
+            padding-right: 1rem;
+            margin-top: 0.25rem;
+        }
+
+        .messages.active:empty {
+            display: none;
         }
         
-        .messages::-webkit-scrollbar {
+        .messages.active::-webkit-scrollbar {
             width: 6px;
         }
         
-        .messages::-webkit-scrollbar-track {
+        .messages.active::-webkit-scrollbar-track {
             background: transparent;
         }
         
-        .messages::-webkit-scrollbar-thumb {
-            background: var(--light-border);
+        .messages.active::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 3px;
         }
         
         .message {
-            margin-bottom: 2rem;
             display: flex;
             gap: 1rem;
             opacity: 0;
             animation: fadeIn 0.4s ease forwards;
+            align-items: flex-start;
         }
         
         @keyframes fadeIn {
@@ -116,28 +259,40 @@
         
         .message-content {
             max-width: 75%;
-            padding: 1.25rem 1.75rem;
-            border-radius: 12px;
-            line-height: 1.7;
-            font-size: 0.95rem;
+            padding: 1.1rem 1.5rem;
+            border-radius: 16px;
+            line-height: 1.65;
+            font-size: 0.94rem;
             font-weight: 300;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .message-content p {
+            margin-bottom: 0.65rem;
+        }
+        
+        .message-content p:last-child {
+            margin-bottom: 0;
         }
         
         .message.bot .message-content {
-            background: #F5F1EB;
-            color: var(--soft-text);
+            color: var(--soft-white);
             max-width: 100%;
         }
         
         .message.user .message-content {
-            background: var(--warm-brown);
-            color: white;
+            background: var(--user-bubble);
+            color: var(--user-text);
+            border: none;
             max-width: 75%;
         }
+
         
         .itinerary-card {
-            background: var(--card-bg);
-            border: 1px solid var(--light-border);
+            background: rgba(32, 28, 24, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 12px;
             margin-top: 1.5rem;
             overflow: hidden;
@@ -145,31 +300,31 @@
         }
         
         .itinerary-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
         }
         
         .property-image {
             width: 100%;
-            height: 260px;
+            height: 200px;
             object-fit: cover;
             filter: saturate(0.85);
         }
         
         .property-content {
-            padding: 2rem;
+            padding: 1.5rem;
         }
         
         .property-name {
             font-family: 'Crimson Pro', serif;
-            font-size: 1.75rem;
+            font-size: 1.55rem;
             font-weight: 400;
-            color: var(--soft-text);
+            color: var(--soft-white);
             margin-bottom: 0.75rem;
         }
         
         .verified-badge {
             display: inline-block;
-            color: var(--warm-brown);
+            color: var(--accent-warm);
             font-size: 0.75rem;
             font-weight: 400;
             letter-spacing: 0.05em;
@@ -177,12 +332,12 @@
         }
         
         .why-property {
-            background: #F9F6F1;
-            border-left: 3px solid var(--accent-warm);
-            padding: 1.25rem 1.5rem;
-            margin: 1.5rem 0;
+            background: rgba(245, 216, 167, 0.12);
+            border-left: 3px solid rgba(245, 216, 167, 0.45);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
             font-size: 0.9rem;
-            color: var(--muted-text);
+            color: var(--muted-white);
             line-height: 1.7;
             font-weight: 300;
         }
@@ -190,11 +345,11 @@
         .property-details {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            margin: 1.5rem 0;
-            padding: 1.5rem 0;
-            border-top: 1px solid var(--light-border);
-            border-bottom: 1px solid var(--light-border);
+            gap: 1rem;
+            margin: 1.25rem 0;
+            padding: 1.25rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .detail-item {
@@ -206,13 +361,13 @@
             font-family: 'Crimson Pro', serif;
             font-size: 1.75rem;
             font-weight: 400;
-            color: var(--soft-text);
+            color: var(--soft-white);
         }
         
         .detail-label {
             display: block;
             font-size: 0.75rem;
-            color: var(--muted-text);
+            color: var(--muted-white);
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-top: 0.25rem;
@@ -222,15 +377,15 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
-            margin: 1.25rem 0;
+            margin: 1rem 0;
         }
         
         .amenity {
-            background: #F9F6F1;
+            background: rgba(255, 255, 255, 0.08);
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-size: 0.85rem;
-            color: var(--muted-text);
+            color: var(--soft-white);
             font-weight: 300;
         }
         
@@ -238,128 +393,91 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 1.5rem;
-            margin-top: 1.5rem;
-            border-top: 1px solid var(--light-border);
+            padding-top: 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .itinerary-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.25rem;
+        }
+
+        .book-btn {
+            padding: 0.85rem 2.25rem;
+            background: var(--accent-warm);
+            color: #1F150A;
+            border: none;
+            border-radius: 22px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .book-btn:hover {
+            background: #f1ca82;
+            transform: translateY(-1px);
+        }
+
+        .book-btn.pending {
+            opacity: 0.6;
+            cursor: wait;
+            transform: none;
+        }
+
+        .book-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
         }
         
         .price-detail {
             font-size: 0.9rem;
-            color: var(--muted-text);
+            color: var(--muted-white);
             margin-bottom: 0.5rem;
         }
         
         .total-price {
             font-family: 'Crimson Pro', serif;
-            font-size: 2.25rem;
+            font-size: 1.9rem;
             font-weight: 400;
-            color: var(--warm-brown);
-        }
-        
-        .quick-replies {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
-            flex-wrap: wrap;
-            width: 100%; 
-            justify-content: flex-start;
-        }
-        
-        .quick-reply-btn {
-            padding: 0.75rem 1.5rem;
-            background: transparent;
-            border: 1px solid var(--warm-brown);
-            border-radius: 24px;
-            color: var(--warm-brown);
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.875rem;
-        }
-        
-        .quick-reply-btn:hover {
-            background: var(--warm-brown);
-            color: white;
-        }
-        
-        .input-container {
-            padding: 1.5rem 2rem;
-            border-top: 1px solid var(--light-border);
-            display: flex;
-            gap: 1rem;
-            background: var(--card-bg);
-        }
-        
-        .input-container input {
-            flex: 1;
-            padding: 1rem 1.5rem;
-            border: 1px solid var(--light-border);
-            border-radius: 24px;
-            background: var(--warm-bg);
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.3s ease;
-            font-weight: 300;
-            color: var(--soft-text);
-        }
-        
-        .input-container input::placeholder {
-            color: var(--muted-text);
-        }
-        
-        .input-container input:focus {
-            border-color: var(--warm-brown);
-            background: var(--card-bg);
-        }
-        
-        .input-container button {
-            padding: 1rem 2rem;
-            background: var(--warm-brown);
-            color: white;
-            border: none;
-            border-radius: 24px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .input-container button:hover {
-            background: #6B5843;
-            transform: translateY(-1px);
-        }
-        
-        .input-container button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .typing-indicator {
-            display: none;
-            padding: 1rem 2rem;
-            color: var(--muted-text);
-            font-style: italic;
-            font-weight: 300;
-            font-size: 0.9rem;
-        }
-        
-        .typing-indicator.active {
-            display: block;
+            color: var(--accent-warm);
         }
         
         @media (max-width: 768px) {
-            .container {
-                margin: 1rem auto;
+            .branding {
+                top: 1.5rem;
+                left: 6vw;
+                font-size: 1.5rem;
+                letter-spacing: 0.14em;
+            }
+
+            .hero-title {
+                letter-spacing: 0.04em;
+                text-align: center;
+                align-self: center;
             }
             
+            .input-panel {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+            }
+
+            .input-panel button {
+                width: 100%;
+            }
+
             .messages {
-                padding: 1.5rem 1rem;
+                max-height: 50vh;
             }
-            
+
             .message-content {
                 max-width: 100%;
             }
-            
+
             .property-content {
                 padding: 1.5rem;
             }
@@ -367,60 +485,73 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">
-                <h1>FERRIS</h1>
-            </div>
-            <div class="tagline">We'll take care of you</div>
-        </div>
-    </div>
+    <video class="background-video" autoplay loop muted playsinline>
+        <source src="/background-video" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+    <div class="branding">Ferris</div>
     
-    <div class="container">
-        <div class="chat-container">
-            <div class="messages" id="messages">
-                <div class="message bot">
-                    <div class="message-content">
-                        Hi there! 👋 Where would you like to go?
-                        <div class="quick-replies">
-                            <button class="quick-reply-btn" onclick="sendQuick('Beach weekend in San Diego')">🏖️ Beach weekend</button>
-                            <button class="quick-reply-btn" onclick="sendQuick('Skiing in Tahoe')">⛷️ Mountain escape</button>
-                            <button class="quick-reply-btn" onclick="sendQuick('Wine tasting in Napa')">🍷 Wine country</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="typing-indicator" id="typingIndicator">
-                Finding the perfect spot for you...
-            </div>
-            
-            <div class="input-container">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    placeholder="Tell us about your dream trip..."
-                    onkeypress="if(event.key==='Enter') sendMessage()"
-                />
-                <button onclick="sendMessage()" id="sendBtn">Send</button>
-            </div>
+    <div class="interface">
+        <h1 class="hero-title">Let us plan your <br><span>next adventure</span></h1>
+        
+        <div class="messages" id="messages"></div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            Finding the perfect spot for you...
+        </div>
+
+        <div class="input-panel">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Tell us about your next trip..."
+                onkeypress="if(event.key==='Enter') sendMessage()"
+            />
+            <button onclick="sendMessage()" id="sendBtn">&#8594;</button>
         </div>
     </div>
     
     <script>
         let sessionId = 'session_' + Date.now();
         
-        function addMessage(text, isUser, itinerary = null, quickReplies = []) {
+        function renderMarkdown(text) {
+            const escaped = (text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            
+            let formatted = escaped
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`(.+?)`/g, '<code>$1</code>');
+
+            let blocks = formatted.split(/\n{2,}/).map(block => block.trim());
+            blocks = blocks.filter(block => block.length > 0);
+            if (blocks.length === 0) {
+                blocks = [formatted.trim()];
+            }
+            return blocks
+                .map(block => `<p>${block.replace(/\n/g, '<br>')}</p>`)
+                .join('');
+        }
+
+        function addMessage(text, isUser, itinerary = null, state = null) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            if (!messagesDiv.classList.contains('active')) {
+                messagesDiv.classList.add('active');
+            }
             
-            let content = `<div class="message-content">${text}`;
+            const htmlText = renderMarkdown(text);
+            let content = `<div class="message-content">${htmlText}`;
             
             if (itinerary) {
                 const stay = itinerary.stay;
                 const nights = itinerary.nights || 2;
-                
+                const itineraryId = itinerary.id || '';
+
                 content += `
                     <div class="itinerary-card">
                         <img src="${stay.image_url}" alt="${stay.name}" class="property-image" onerror="this.style.display='none'">
@@ -460,6 +591,10 @@
                                     <div class="total-price">$${itinerary.total_price.toFixed(0)}</div>
                                 </div>
                             </div>
+
+                            <div class="itinerary-actions">
+                                ${state === 'HOLDING' ? '' : `<button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>`}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -467,43 +602,32 @@
             
             content += '</div>';
             
-            if (quickReplies && quickReplies.length > 0 && !isUser) {
-                content += '<div class="quick-replies">';
-                quickReplies.forEach(reply => {
-                    content += `<button class="quick-reply-btn" onclick="sendQuick('${reply}')">${reply}</button>`;
-                });
-                content += '</div>';
-            }
-            
             messageDiv.innerHTML = content;
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            document.body.classList.add('conversation-active');
         }
         
-        function sendQuick(message) {
-            document.getElementById('messageInput').value = message;
-            sendMessage();
-        }
-        function askForCustomDates() {
+        async function sendMessage(forcedMessage = null, options = {}) {
+            const { echoUser = true } = options;
             const input = document.getElementById('messageInput');
-            input.placeholder = "e.g., November 15-17, or Dec 1-3";
-            input.focus();
-    
-    // Add helper message
-    addMessage("Sure! Just type your dates like 'Nov 15-17' or 'December 1-3'", false, null, []);
-        }
-        
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
+            const raw = forcedMessage !== null ? forcedMessage : input.value;
+            const message = (raw || '').trim();
             
             if (!message) return;
             
-            addMessage(message, true);
-            input.value = '';
+            if (echoUser) {
+                addMessage(message, true);
+            }
+            
+            if (forcedMessage === null) {
+                input.value = '';
+            }
             
             document.getElementById('typingIndicator').classList.add('active');
             document.getElementById('sendBtn').disabled = true;
+            let success = true;
+            let responseData = null;
             
             try {
                 const response = await fetch('/chat', {
@@ -518,15 +642,41 @@
                     })
                 });
                 
-                const data = await response.json();
-                addMessage(data.text, false, data.itinerary, data.quick_replies || []);
+                responseData = await response.json();
+                success = response.ok;
+                addMessage(responseData.text, false, responseData.itinerary, responseData.state);
                 
             } catch (error) {
                 addMessage('Sorry, something went wrong. Please try again.', false);
+                success = false;
             } finally {
                 document.getElementById('typingIndicator').classList.remove('active');
                 document.getElementById('sendBtn').disabled = false;
                 input.focus();
+            }
+
+            return { success, data: responseData };
+        }
+
+        async function bookItinerary(event) {
+            const button = event?.currentTarget;
+            if (button) {
+                button.disabled = true;
+                button.classList.add('pending');
+                button.dataset.originalText = button.textContent;
+                button.textContent = 'Booking...';
+            }
+            
+            const result = await sendMessage('BOOK', { echoUser: false });
+            
+            if (button) {
+                button.classList.remove('pending');
+                if (!result?.success) {
+                    button.disabled = false;
+                    button.textContent = button.dataset.originalText || 'Book';
+                } else {
+                    button.textContent = 'Booked';
+                }
             }
         }
     </script>

@@ -1,5 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from .models import ChatRequest, ChatResponse
 from .state import STORE
@@ -15,6 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+VIDEO_FILE = Path("1739010-hd_1920_1080_30fps.mp4")
+
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "version": "2.0.0"}
@@ -22,10 +26,10 @@ def healthz():
 @app.get("/", response_class=HTMLResponse)
 def landing():
     try:
-        with open("static/landing.html", "r", encoding="utf-8") as f:
+        with open("static/index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(f.read())
     except FileNotFoundError:
-        return HTMLResponse("<h1>Landing page not found</h1>", status_code=404)
+        return HTMLResponse("<h1>Demo not found</h1>", status_code=404)
 
 @app.get("/demo", response_class=HTMLResponse)
 def demo():
@@ -34,6 +38,12 @@ def demo():
             return HTMLResponse(f.read())
     except FileNotFoundError:
         return HTMLResponse("<h1>Demo not found</h1>", status_code=404)
+
+@app.get("/background-video")
+def background_video():
+    if not VIDEO_FILE.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(VIDEO_FILE, media_type="video/mp4")
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):

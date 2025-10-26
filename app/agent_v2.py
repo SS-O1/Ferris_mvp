@@ -1,19 +1,20 @@
 from __future__ import annotations
 from typing import Dict, Any
 from .conversation_flow import (
-    ConversationContext, 
-    generate_clarification,
+    ConversationContext,
     resolve_date_input,
-    parse_guest_count
+    parse_guest_count,
+    ConversationState,
 )
-from .intent_parser import parse_intent
 from .airbnb_scraper import search_airbnb
 from .ranker import rank_listings
+from .llm import LLMNotConfiguredError, generate_brand_response
 
 def process_message(message: str, session: Any) -> Dict[str, Any]:
     """
     Enhanced agent with conversation flow
     """
+    session.last_user_message = message
     
     # Initialize conversation context if not exists
     if not hasattr(session, 'conversation_context'):
@@ -31,28 +32,21 @@ def process_message(message: str, session: Any) -> Dict[str, Any]:
         elif any(word in msg_lower for word in ["different", "something else", "another", "other option"]):
             return handle_refinement(session, "different")
     
-    # Update context with new message
+    # Update context with new message and auto-complete missing info
     update_context_from_message(context, message)
+    auto_complete_missing_slots(context)
     
-    # Check if we need to clarify
-    if not context.is_ready_to_search():
-        clarification = generate_clarification(context, message)
-        
-        if clarification["action"] == "clarify":
-            return {
-                "text": clarification["question"],
-                "itinerary": None,
-                "state": "COLLECTING_SLOTS",
-                "needed": [clarification["collecting"]],
-                "quick_replies": clarification.get("quick_replies", [])
-            }
-    
-    # Ready to search!
+    # Ready to search immediately
     return execute_search(context, session)
 
 def update_context_from_message(context: ConversationContext, message: str):
     """Extract and update slots from user message"""
     msg = message.lower()
+    
+    # Capture activity cues early to influence downstream defaults
+    activity = context.extract_activity(message)
+    if activity:
+        context.slots["activity"] = activity
     
     # If we're waiting for custom dates or user entered something with numbers, try to parse as date
     if context.waiting_for_custom_dates or (not context.slots["check_in"] and any(char.isdigit() for char in msg)):
@@ -115,8 +109,51 @@ def update_context_from_message(context: ConversationContext, message: str):
         context.slots["budget_max"] = float(budget_match2.group(1))
 
 
+def auto_complete_missing_slots(context: ConversationContext) -> None:
+    """
+    Fill in any missing slots so we can always return a recommendation.
+    Placeholder for future ML-powered completion.
+    """
+    # Destination defaults by activity, falls back to a popular choice
+    activity_defaults = {
+        "beach": "San Diego",
+        "ski": "Lake Tahoe",
+        "wine": "Napa",
+        "hiking": "Big Sur",
+        "city": "San Francisco",
+        "relaxing": "Carmel",
+    }
+    
+    if not context.slots["destination"]:
+        context.slots["destination"] = activity_defaults.get(context.slots.get("activity")) or "San Diego"
+    
+    if not context.slots["check_in"] or not context.slots["check_out"]:
+        check_in, check_out = resolve_date_input("next weekend")
+        context.slots["check_in"] = check_in
+        context.slots["check_out"] = check_out
+    
+    if not context.slots["guests"]:
+        context.slots["guests"] = 2
+    
+    context.state = ConversationState.READY_TO_SEARCH
+
+def get_simulated_profile(session: Any) -> Dict[str, Any]:
+    """
+    Placeholder insights until real historical trip modeling is wired up.
+    """
+    if not hasattr(session, "profile"):
+        session.profile = {
+            "avg_budget": 950,
+            "travel_party": "two close friends",
+            "trip_style": "your signature treat-yourself comfort",
+            "signature_move": "picking places with standout reviews",
+        }
+    return session.profile
+
 def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]:
     """Execute search and return THE recommendation"""
+    
+    profile = get_simulated_profile(session)
     
     listings = search_airbnb(
         destination=context.slots["destination"],
@@ -131,7 +168,7 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
             "itinerary": None,
             "state": "FAILED",
             "needed": [],
-            "quick_replies": ["This weekend", "Next weekend", "Different location"]
+            "quick_replies": []
         }
     
     # Rank and get THE best one
@@ -159,6 +196,15 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
     check_out_date = datetime.fromisoformat(context.slots["check_out"])
     nights = (check_out_date - check_in_date).days
     total_price = best["price_per_night"] * nights
+    date_label = f"{check_in_date.strftime('%b %d')} – {check_out_date.strftime('%b %d')}"
+    activity_context = {
+        "beach": "for a breezy beach escape",
+        "ski": "for your ski weekend",
+        "wine": "for easy vineyard hopping",
+        "hiking": "near the trailheads",
+        "city": "in the heart of the action",
+        "relaxing": "where you can truly unwind",
+    }.get(context.slots.get("activity"))
     
     # Build itinerary
     itinerary = {
@@ -193,18 +239,85 @@ def execute_search(context: ConversationContext, session: Any) -> Dict[str, Any]
     
     # Build response
     why_text = itinerary["why_this_property"]
-    text = f"Found THE perfect spot for you! 🎯\n\n**{best['name']}**\n\n{why_text}\n\n"
-    text += f"💰 ${total_price:.0f} total ({nights} nights × ${best['price_per_night']:.0f})\n"
-    text += f"🛏️ {best['beds']} beds, {best['baths']} baths\n"
-    text += f"⭐ {best['rating']}/5 ({best['review_count']} reviews)\n\n"
-    text += f"Type **BOOK** to reserve, or ask for something different!"
+    headline = f"{context.slots['destination']} · {date_label}"
+    lead_in = "Here’s what I’d book"
+    if activity_context:
+        lead_in += f" {activity_context}"
+    lead_in += ":"
     
+    upbeat_intro = "That sounds like a blast!"
+    if context.slots.get("activity") == "relaxing":
+        upbeat_intro = "This is going to feel so restorative!"
+    elif context.slots.get("activity") == "ski":
+        upbeat_intro = "Fresh powder and good vibes coming right up!"
+    elif context.slots.get("activity") == "wine":
+        upbeat_intro = "Tasting rooms and sunshine? Say no more!"
+    
+    persona_line = (
+        f"Since you usually budget around ${profile['avg_budget']:.0f} "
+        f"and head out with {profile['travel_party']}, we leaned into {profile['trip_style']}."
+    )
+    
+    fallback_lines = [
+        upbeat_intro,
+        headline,
+        "",
+        lead_in,
+        "",
+        f"**{best['name']}**",
+        "",
+        persona_line,
+    ]
+    if why_text:
+        fallback_lines.extend([why_text, ""])
+    fallback_lines.extend(
+        [
+            f"💰 ${total_price:.0f} total ({nights} nights × ${best['price_per_night']:.0f})",
+            f"🛏️ {best['beds']} beds, {best['baths']} baths",
+            f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
+            f"✨ {profile['signature_move'].capitalize()}",
+            "",
+            "Ready when you are—tap the Book button below or tell me what to tweak.",
+        ]
+    )
+    fallback_text = "\n".join(fallback_lines)
+
+    llm_payload = {
+        "user_request": getattr(session, "last_user_message", ""),
+        "headline": headline,
+        "lead_in": lead_in,
+        "upbeat_intro": upbeat_intro,
+        "persona_line": persona_line,
+        "profile": profile,
+        "itinerary": {
+            "name": best["name"],
+            "destination": context.slots["destination"],
+            "dates": itinerary["dates"],
+            "nights": nights,
+            "price_per_night": best["price_per_night"],
+            "total_price": total_price,
+            "beds": best["beds"],
+            "baths": best["baths"],
+            "rating": best["rating"],
+            "review_count": best["review_count"],
+            "amenities": best["amenities"][:6],
+            "url": best["url"],
+        },
+        "why_this_property": why_text,
+        "fallback_copy": fallback_text,
+    }
+
+    try:
+        text = generate_brand_response(llm_payload)
+    except LLMNotConfiguredError:
+        text = fallback_text
+
     return {
         "text": text,
         "itinerary": itinerary,
         "state": "AWAITING_CONSENT",
         "needed": [],
-        "quick_replies": ["BOOK", "Too expensive", "Want more space", "Different area"]
+        "quick_replies": []
     }
 
 def generate_recommendation_reason(property_data: Dict, context: ConversationContext) -> str:
@@ -218,13 +331,13 @@ def generate_recommendation_reason(property_data: Dict, context: ConversationCon
     # Capacity
     if property_data["guests_max"] >= context.slots["guests"]:
         if context.slots["guests"] > 2:
-            reasons.append(f"Comfortably fits your group of {context.slots['guests']}")
+            reasons.append(f"Plenty of space for your crew of {context.slots['guests']}")
         else:
-            reasons.append("Perfect for couples")
+            reasons.append("Perfect cozy setup for two")
     
     # Rating
     if property_data["rating"] >= 4.7:
-        reasons.append(f"Highly rated ({property_data['rating']}/5)")
+        reasons.append(f"Loved by guests ({property_data['rating']}/5)")
     
     # Budget
     if context.slots.get("budget_max"):
@@ -234,6 +347,9 @@ def generate_recommendation_reason(property_data: Dict, context: ConversationCon
             under = context.slots["budget_max"] - total
             reasons.append(f"Under budget (saves you ${under:.0f})")
     
+    if not reasons:
+        reasons.append("Hand-picked because it's the strongest match available right now")
+    
     return " • ".join(reasons[:3])  # Top 3 reasons
 
 def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
@@ -241,6 +357,7 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
     
     context = session.conversation_context
     previous = session.last_itinerary
+    profile = get_simulated_profile(session)
     
     # Get all listings again
     listings = search_airbnb(
@@ -259,7 +376,7 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
             "itinerary": previous,
             "state": "AWAITING_CONSENT",
             "needed": [],
-            "quick_replies": ["Different dates", "Different location", "Book current"]
+            "quick_replies": []
         }
     
     # Apply refinement
@@ -311,20 +428,53 @@ def handle_refinement(session: Any, refinement_type: str) -> Dict[str, Any]:
     
     session.last_itinerary = itinerary
     
-    text = f"Here's a great alternative! 🔄\n\n**{best['name']}**\n\n"
-    text += f"📊 Trade-off: {tradeoff}\n\n"
-    text += f"💰 ${total_price:.0f} total\n"
-    text += f"🛏️ {best['beds']} beds, {best['baths']} baths\n"
-    text += f"⭐ {best['rating']}/5 ({best['review_count']} reviews)\n\n"
-    text += "Type **BOOK** to reserve!"
+    fallback_lines = [
+        "Totally hear you—let's try this vibe instead! 🔄",
+        "",
+        f"**{best['name']}**",
+        "",
+        f"📊 Trade-off: {tradeoff}",
+        f"💡 Keeps things comfy for {profile['travel_party']} without straying from your usual ${profile['avg_budget']:.0f} game plan.",
+        "",
+        f"💰 ${total_price:.0f} total",
+        f"🛏️ {best['beds']} beds, {best['baths']} baths",
+        f"⭐ {best['rating']}/5 ({best['review_count']} reviews)",
+        "",
+        "Tap Book below if this is the one.",
+    ]
+    fallback_text = "\n".join(fallback_lines)
+
+    llm_payload = {
+        "user_request": getattr(session, "last_user_message", ""),
+        "refinement_type": refinement_type,
+        "profile": profile,
+        "tradeoff": tradeoff,
+        "itinerary": {
+            "name": best["name"],
+            "destination": context.slots["destination"],
+            "dates": itinerary["dates"],
+            "nights": nights,
+            "price_per_night": best["price_per_night"],
+            "total_price": total_price,
+            "beds": best["beds"],
+            "baths": best["baths"],
+            "rating": best["rating"],
+            "review_count": best["review_count"],
+            "amenities": best["amenities"][:6],
+            "url": best["url"],
+        },
+        "fallback_copy": fallback_text,
+    }
+
+    try:
+        text = generate_brand_response(llm_payload)
+    except LLMNotConfiguredError:
+        text = fallback_text
     
     return {
         "text": text,
         "itinerary": itinerary,
         "state": "AWAITING_CONSENT",
         "needed": [],
-        "quick_replies": ["BOOK", "Show another", "Go back to previous"]
+        "quick_replies": []
     }
-
-# Import ConversationState enum
-from .conversation_flow import ConversationState
