@@ -58,7 +58,7 @@ def _generate_mock_listings(destination: str, check_in: str, check_out: str, gue
             "price_per_night": template["base_price"] + price_variance,
             "rating": round(random.uniform(4.2, 4.95), 2),
             "review_count": random.randint(15, 250),
-            "image_url": f"https://via.placeholder.com/400x300/667eea/ffffff?text={template['name'].split()[0]}",
+            "image_url": f"https://placehold.co/400x300/667eea/ffffff?text={template['name'].split()[0]}",
             "url": f"https://airbnb.com/rooms/{random.randint(10000000, 99999999)}",
             "amenities": random.sample(["Wifi", "Kitchen", "Free parking", "Pool", "Hot tub", "AC", "Washer", "Workspace"], k=random.randint(3, 6)),
             "cancellation_policy": random.choice(["Flexible", "Moderate", "Strict"])

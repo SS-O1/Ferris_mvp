@@ -502,6 +502,7 @@
         </div>
 
         <div class="input-panel">
+            <button id="micBtn" title="Start or stop voice">🎤</button>
             <input 
                 type="text" 
                 id="messageInput" 
@@ -513,8 +514,11 @@
     </div>
     
     <script>
-        let sessionId = 'session_' + Date.now();
-        
+        // Persist session across refreshes
+        let sessionId = localStorage.getItem('ferris_session') || (crypto.randomUUID?.() || String(Date.now()));
+        localStorage.setItem('ferris_session', sessionId);
+
+        // Markdown renderer retained from existing UI
         function renderMarkdown(text) {
             const escaped = (text || '')
                 .replace(/&/g, '&amp;')
@@ -535,8 +539,108 @@
                 .map(block => `<p>${block.replace(/\n/g, '<br>')}</p>`)
                 .join('');
         }
+        // --- Voice recognition and TTS wiring from voiceChat ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognizer = SpeechRecognition ? new SpeechRecognition() : null;
+        if (recognizer) {
+            recognizer.lang = 'en-US';
+            recognizer.interimResults = true;
+            recognizer.continuous = true;
+        }
 
-        function addMessage(text, isUser, itinerary = null, state = null) {
+        const micBtn = document.getElementById('micBtn');
+
+        function playDeepgramTTS(text) {
+            try {
+                const src = `http://localhost:3000/tts?text=${encodeURIComponent(text)}`;
+                const audio = new Audio();
+                audio.crossOrigin = 'anonymous';
+                audio.src = src;
+                audio.play().catch(err => {
+                    console.warn('Autoplay blocked or error playing TTS:', err);
+                });
+            } catch (error) {
+                console.error('Error starting TTS playback:', error);
+            }
+        }
+
+        function say(msg) { playDeepgramTTS(msg); }
+
+        function one(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function cleanForUI(text) {
+            if (!text) return '';
+            let t = String(text);
+            t = t.replace(/[*_`~]+/g, '');
+            t = t.replace(/[\p{Extended_Pictographic}\uFE0F]/gu, '').replace(/[\u2600-\u27BF\u1F300-\u1FAFF]/g, '');
+            t = t.replace(/type\s+book\b/gi, "say 'book'");
+            t = t.replace(/!+/g, '.');
+            t = t.replace(/\s{2,}/g, ' ').trim();
+            return t;
+        }
+        function conversationalOffer(ctx, data) {
+            const itin = data?.itinerary || null;
+            const stay = itin?.stay || null;
+            const nights = itin?.nights || null;
+            if (stay) {
+                const beds = stay.beds != null ? Number(stay.beds) : null;
+                const baths = stay.baths != null ? Number(stay.baths) : null;
+                const rating = stay.rating != null ? Number(stay.rating) : null;
+                const reviews = stay.review_count != null ? Number(stay.review_count) : null;
+                const priceTotal = typeof itin.total_price === 'number' ? `$${itin.total_price.toFixed(0)}` : (itin.total_price || '');
+                const openers = [ nights ? `Got it—${nights} night${nights>1?'s':''}.` : `Got it.`, `Sounds good.`, `Alright.` ];
+                const pieces = [];
+                pieces.push(`I found a place that should fit.`);
+                const facts = [];
+                if (beds) facts.push(`${beds} bed${beds>1?'s':''}`);
+                if (baths) facts.push(`${baths} bath${baths>1?'s':''}`);
+                if (rating && reviews) facts.push(`rated ${rating.toFixed(2)} from ${reviews} reviews`);
+                if (facts.length) pieces.push(facts.join(', ') + '.');
+                if (priceTotal && nights) pieces.push(`It comes to about ${priceTotal} for ${nights} night${nights>1?'s':''}.`);
+                const alts = [ 'closer', 'cheaper', 'quieter' ];
+                const ask = ctx?.preference || one(alts);
+                const ctas = [ `Want me to book this, or should I find something ${ask}?`, `Does that location work, or should I tighten the radius?`, `Shall I hold this, or compare two similar spots?` ];
+                return `${one(openers)} ${pieces.join(' ')} ${one(ctas)}`.replace(/\s{2,}/g, ' ').trim();
+            }
+            return cleanForUI(data?.text || '');
+        }
+        function makeConversationalReply(data) {
+            const ctx = { preference: undefined };
+            return conversationalOffer(ctx, data);
+        }
+        function updateMicButton(state) {
+            if (!micBtn) return;
+            if (state === 'start') { micBtn.textContent = '🎤 Start Conversation'; micBtn.dataset.state = 'start'; }
+            else if (state === 'end') { micBtn.textContent = '🛑 End Conversation'; micBtn.dataset.state = 'end'; }
+        }
+        document.addEventListener('DOMContentLoaded', () => { updateMicButton('start'); });
+        if (recognizer && micBtn) {
+            recognizer.onstart = () => updateMicButton('end');
+            recognizer.onend = () => updateMicButton('start');
+            recognizer.onresult = async (e) => {
+                const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+                if (e.results[e.results.length - 1].isFinal) {
+                    addMessage(transcript, true);
+                    try {
+                        const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: transcript, context: { session_id: sessionId } }) });
+                        const data = await res.json();
+                        const conversationalResponse = makeConversationalReply(data);
+                        addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || []);
+                        say(conversationalResponse);
+                    } catch (err) {
+                        addMessage('Sorry, something went wrong. Please try again.', false);
+                    }
+                }
+            };
+            recognizer.onerror = () => updateMicButton('start');
+            micBtn.addEventListener('click', () => {
+                const currentState = micBtn.dataset.state;
+                if (currentState === 'start') { try { recognizer.start(); } catch(_){} }
+                else { try { recognizer.stop(); } catch(_){} }
+            });
+        }
+
+        // AddMessage supports both state (string) and quickReplies (array) as 4th param
+        function addMessage(text, isUser, itinerary = null, stateOrQuick = null) {
             const messagesDiv = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
@@ -593,7 +697,7 @@
                             </div>
 
                             <div class="itinerary-actions">
-                                ${state === 'HOLDING' ? '' : `<button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>`}
+                                ${stateOrQuick === 'HOLDING' ? '' : `<button class="book-btn" data-itinerary-id="${itineraryId}" onclick="bookItinerary(event)">Book</button>`}
                             </div>
                         </div>
                     </div>
@@ -641,10 +745,11 @@
                         }
                     })
                 });
-                
-                responseData = await response.json();
+                const data = await response.json();
+                responseData = data;
                 success = response.ok;
-                addMessage(responseData.text, false, responseData.itinerary, responseData.state);
+                const conversationalResponse = makeConversationalReply(data);
+                addMessage(conversationalResponse, false, data.itinerary, data.quick_replies || data.state || null);
                 
             } catch (error) {
                 addMessage('Sorry, something went wrong. Please try again.', false);
@@ -679,6 +784,38 @@
                 }
             }
         }
+
+        // TTS is triggered automatically via say() on bot responses; no need to override send button behavior
+
+        async function initializeConversation() {
+            const micBtn = document.getElementById('micBtn');
+
+            try {
+                micBtn.textContent = '🤔 Thinking...'; // Show loading state
+                micBtn.disabled = true; // Disable button during loading
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Start conversation', context: { session_id: sessionId } })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to initialize conversation');
+                }
+
+                const data = await response.json();
+                addMessage(data.text, false); // Display bot's response
+            } catch (error) {
+                console.error('Error initializing conversation:', error);
+                alert('Failed to start the conversation. Please try again.');
+            } finally {
+                micBtn.textContent = '🎤 Start Conversation'; // Reset button text
+                micBtn.disabled = false; // Re-enable button
+            }
+        }
+
+    // Do not bind initializeConversation to the mic button to avoid conflicting click behavior
     </script>
 </body>
 </html>
