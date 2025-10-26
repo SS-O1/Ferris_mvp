@@ -4,6 +4,15 @@ __pycache__/
 .env
 .DS_Store
 *.log
-ferris-476304-0f8e7aba7efc.json
 node_modules/
+
+# Google Cloud credentials - NEVER commit these!
+ferris-476304-0f8e7aba7efc.json
+*.json
+!package.json
+!accom.json
+!transport.json
+
+# Hugging Face Spaces specific
+.space/
 
