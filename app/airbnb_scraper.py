@@ -145,7 +145,9 @@ def _normalize_catalog_property(
     beds = (
         prop.get("beds")
         or property_details.get("beds")
+        or property_details.get("bedrooms")
         or accommodation.get("bed_configuration")
+        or prop.get("bedrooms")
     )
     beds = _extract_numeric(beds, fallback=3)
 

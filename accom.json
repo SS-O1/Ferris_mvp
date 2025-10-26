@@ -21,111 +21,206 @@
         "properties": [
           {
             "source": "Hotel",
-            "property_id": "h100",
-            "name": "The Westin Resort & Spa, Cancun",
-            "star_rating": 4.0,
-            "property_type": "Beachfront Resort",
-            "address": {
-              "street": "Boulevard Kukulcan Km 20",
-              "city": "Cancun",
-              "postal_code": "77500",
-              "distance_from_airport": "9.3 miles (15 min)"
-            },
+            "property_id": "cancun_villa_6br",
+            "name": "Luxury 6BR Beachfront Villa - Private Pool",
+            "star_rating": 5.0,
+            "property_type": "Luxury Villa",
             "ratings": {
-              "overall": 8.6,
-              "num_reviews": 5887,
-              "cleanliness": 9.1,
-              "service": 8.8,
-              "location": 8.9,
-              "value": 7.8
+              "overall": 9.5,
+              "num_reviews": 342
             },
-            "accommodation": {
-              "room_type": "Standard Ocean View Room",
-              "room_size_sqft": 420,
-              "max_occupancy": 4,
-              "bed_configuration": "King or Two Queens",
-              "balcony": true,
-              "view": "Ocean View"
-            },
+            "beds": 6,
+            "bathrooms": 6,
+            "max_guests": 14,
             "pricing": {
-              "nightly_rate": 315,
+              "nightly_rate": 1250,
               "num_nights": 9,
-              "total_cost_usd": 7616,
-              "currency": "USD"
+              "total_cost_usd": 11250
             },
-            "amenities": [
-              "4 outdoor pools",
-              "Full-service spa",
-              "Free WiFi",
-              "Tennis courts",
-              "Water sports"
-            ],
+            "amenities": ["Private pool", "Ocean views", "Butler service", "Beach access", "Gourmet kitchen", "Game room", "Jacuzzi"],
             "tags": {
-              "all_inclusive": false,
-              "adults_only": false
+              "luxury": true
             }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "cancun_suite_5br",
+            "name": "Presidential 5BR Suite - All Inclusive Resort",
+            "star_rating": 5.0,
+            "property_type": "Resort Suite",
+            "ratings": {
+              "overall": 9.3,
+              "num_reviews": 567
+            },
+            "beds": 5,
+            "bathrooms": 5,
+            "max_guests": 12,
+            "pricing": {
+              "nightly_rate": 985,
+              "num_nights": 9,
+              "total_cost_usd": 8865
+            },
+            "amenities": ["All-inclusive", "Ocean views", "Private terrace", "Butler service", "Spa access", "Multiple pools"],
+            "tags": {
+              "all_inclusive": true,
+              "luxury": true
+            }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "h101124286",
+            "name": "Hyatt Vivid Grand Island Cancun - 4BR Suite",
+            "star_rating": 4.5,
+            "property_type": "Resort Suite",
+            "ratings": {
+              "overall": 9.2,
+              "num_reviews": 450
+            },
+            "beds": 4,
+            "bathrooms": 4,
+            "max_guests": 10,
+            "pricing": {
+              "nightly_rate": 765,
+              "num_nights": 9,
+              "total_cost_usd": 6885
+            },
+            "amenities": ["Adults-only", "All-inclusive", "Luxury spa", "Ocean views", "Multiple pools", "Beach club"],
+            "tags": {
+              "adults_only": true,
+              "all_inclusive": true
+            }
+          },
+          {
+            "source": "Hotel",
+            "property_id": "cancun_condo_3br",
+            "name": "Modern 3BR Beachfront Condo",
+            "star_rating": 4.0,
+            "property_type": "Vacation Condo",
+            "ratings": {
+              "overall": 8.9,
+              "num_reviews": 234
+            },
+            "beds": 3,
+            "bathrooms": 3,
+            "max_guests": 8,
+            "pricing": {
+              "nightly_rate": 425,
+              "num_nights": 9,
+              "total_cost_usd": 3825
+            },
+            "amenities": ["Ocean views", "Full kitchen", "Beach access", "Pool", "Wifi", "Balcony"],
+            "tags": {}
           },
           {
             "source": "Hotel",
             "property_id": "h1823032",
-            "name": "Ocean Coral & Turquesa All Inclusive",
+            "name": "Ocean Coral & Turquesa All Inclusive - 2BR Suite",
             "star_rating": 5.0,
-            "property_type": "All-Inclusive Beachfront Resort",
+            "property_type": "All-Inclusive Resort Suite",
+            "ratings": {
+              "overall": 8.8,
+              "num_reviews": 1200
+            },
+            "beds": 2,
+            "bathrooms": 2,
+            "max_guests": 6,
             "pricing": {
               "nightly_rate": 356,
-              "total_cost_usd": 6413
+              "num_nights": 9,
+              "total_cost_usd": 3204
             },
+            "amenities": ["All-inclusive", "Beach access", "Multiple pools", "Spa", "Kids club", "Water sports"],
             "tags": {
-              "all_inclusive": true,
-              "adults_only": false
+              "all_inclusive": true
             }
           },
           {
             "source": "Hotel",
-            "property_id": "h12210",
-            "name": "The Westin Lagunamar Ocean Resort Villas & Spa",
+            "property_id": "h100",
+            "name": "The Westin Resort & Spa, Cancun - 2BR Suite",
             "star_rating": 4.0,
+            "property_type": "Beachfront Resort Suite",
+            "ratings": {
+              "overall": 8.6,
+              "num_reviews": 5887
+            },
+            "beds": 2,
+            "bathrooms": 2,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 315,
+              "num_nights": 9,
+              "total_cost_usd": 2835
+            },
+            "amenities": ["4 outdoor pools", "Full-service spa", "Free WiFi", "Tennis courts", "Water sports", "Beach access"],
+            "tags": {}
+          },
+          {
+            "source": "Hotel",
+            "property_id": "cancun_studio_deluxe",
+            "name": "Deluxe Studio with Ocean View",
+            "star_rating": 4.0,
+            "property_type": "Hotel Studio",
+            "ratings": {
+              "overall": 8.4,
+              "num_reviews": 892
+            },
+            "beds": 1,
+            "bathrooms": 1,
+            "max_guests": 3,
+            "pricing": {
+              "nightly_rate": 245,
+              "num_nights": 9,
+              "total_cost_usd": 2205
+            },
+            "amenities": ["Ocean views", "Pool access", "Beach access", "Wifi", "Mini fridge", "Restaurant"],
+            "tags": {}
+          },
+          {
+            "source": "Hotel",
+            "property_id": "h12210",
+            "name": "The Westin Lagunamar Ocean Resort Villas - 1BR",
+            "star_rating": 4.0,
+            "property_type": "Resort Villa",
+            "ratings": {
+              "overall": 9.0,
+              "num_reviews": 800
+            },
+            "beds": 1,
+            "bathrooms": 1,
+            "max_guests": 4,
             "pricing": {
               "nightly_rate": 233,
-              "total_cost_usd": 5147
+              "num_nights": 9,
+              "total_cost_usd": 2097
             },
+            "amenities": ["Spa", "Ocean views", "Eco-certified", "Kitchen", "Pool", "Beach access"],
             "tags": {
               "eco_certified": true
             }
           },
           {
             "source": "Hotel",
-            "property_id": "h101124286",
-            "name": "Hyatt Vivid Grand Island Cancun",
-            "star_rating": 4.5,
-            "pricing": {
-              "nightly_rate": 765,
-              "total_cost_usd": 13778
+            "property_id": "cancun_budget_room",
+            "name": "Budget Beach Hotel - Standard Room",
+            "star_rating": 3.0,
+            "property_type": "Hotel Room",
+            "ratings": {
+              "overall": 7.8,
+              "num_reviews": 456
             },
-            "tags": {
-              "adults_only": true,
-              "all_inclusive": true
-            }
+            "beds": 1,
+            "bathrooms": 1,
+            "max_guests": 2,
+            "pricing": {
+              "nightly_rate": 125,
+              "num_nights": 9,
+              "total_cost_usd": 1125
+            },
+            "amenities": ["Beach nearby", "Pool", "Wifi", "Restaurant", "Air conditioning"],
+            "tags": {}
           }
-        ],
-        "hotel_comparison": {
-          "most_affordable": {
-            "name": "Westin Lagunamar",
-            "total": 5147
-          },
-          "best_all_inclusive_value": {
-            "name": "Ocean Coral & Turquesa",
-            "total": 6413
-          },
-          "highest_rated": {
-            "name": "Westin Lagunamar",
-            "rating": 9.0
-          },
-          "most_luxurious": {
-            "name": "Hyatt Vivid Grand Island",
-            "total": 13778
-          }
-        }
+        ]
       },
       {
         "destination_id": "dest_002",
@@ -141,61 +236,362 @@
         "properties": [
           {
             "source": "Airbnb",
-            "listing_id": "46690528",
-            "title": "Quiet and Cozy Stay in Tahoe City",
-            "location": "Tahoe City, California",
-            "rating": 4.82,
-            "num_reviews": 172,
-            "bedrooms": 2,
-            "beds": 3,
-            "bathrooms": 1.5,
-            "max_guests": 5,
+            "listing_id": "tahoe_luxury_1",
+            "title": "Luxury 6BR Ski Estate with Private Hot Tub",
+            "location": "South Lake Tahoe, California",
+            "rating": 4.96,
+            "num_reviews": 218,
+            "beds": 6,
+            "bathrooms": 4.5,
+            "max_guests": 14,
             "pricing": {
-              "nightly_rate": 285,
-              "total_price": 1047,
-              "currency": "USD"
+              "nightly_rate": 875,
+              "total_price": 2625,
+              "num_nights": 3
             },
-            "host": "Sarah & Michael",
-            "superhost": true,
-            "amenities": [
-              "Multiple pools",
-              "Tennis courts",
-              "Near beaches",
-              "WiFi",
-              "Free parking"
-            ]
+            "amenities": ["Hot tub", "Ski storage", "Mountain views", "Fireplace", "Gourmet kitchen", "Game room", "Sauna"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "tahoe_5br_1",
+            "title": "Stunning 5BR Mountain Retreat Near Heavenly",
+            "location": "South Lake Tahoe, California",
+            "rating": 4.92,
+            "num_reviews": 167,
+            "beds": 5,
+            "bathrooms": 3.5,
+            "max_guests": 12,
+            "pricing": {
+              "nightly_rate": 695,
+              "total_price": 2085,
+              "num_nights": 3
+            },
+            "amenities": ["Hot tub", "Ski storage", "Lake views", "Fireplace", "Modern kitchen", "Pool table"]
           },
           {
             "source": "Airbnb",
             "listing_id": "1392159224096068592",
-            "title": "Modern Kings Beach Sanctuary",
+            "title": "Modern Kings Beach Sanctuary - 4BR",
+            "location": "Kings Beach, California",
             "rating": 4.91,
-            "nightly_rate": 425,
-            "total_price": 1587,
+            "num_reviews": 85,
+            "beds": 4,
+            "bathrooms": 2,
             "max_guests": 8,
-            "host": "Jennifer",
-            "superhost": true
+            "pricing": {
+              "nightly_rate": 425,
+              "total_price": 1275,
+              "num_nights": 3
+            },
+            "amenities": ["Modern kitchen", "Mountain views", "Hot tub", "Ski nearby", "Wifi", "Deck"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "tahoe_4br_budget",
+            "title": "Cozy 4BR Family Home - Budget Friendly",
+            "location": "Tahoe City, California",
+            "rating": 4.78,
+            "num_reviews": 142,
+            "beds": 4,
+            "bathrooms": 2,
+            "max_guests": 8,
+            "pricing": {
+              "nightly_rate": 325,
+              "total_price": 975,
+              "num_nights": 3
+            },
+            "amenities": ["Fireplace", "Kitchen", "Free parking", "Ski nearby", "Wifi"]
           },
           {
             "source": "Airbnb",
             "listing_id": "685550870183462995",
-            "title": "Lake Tahoe Epic Marla Bay Condo - private beach",
+            "title": "Lake Tahoe Epic Marla Bay Condo - 3BR",
+            "location": "Stateline, Nevada",
             "rating": 4.76,
-            "nightly_rate": 395,
-            "total_price": 1478,
-            "host": "Robert & Lisa"
+            "num_reviews": 120,
+            "beds": 3,
+            "bathrooms": 2,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 395,
+              "total_price": 1185,
+              "num_nights": 3
+            },
+            "amenities": ["Private beach", "Lake views", "Fireplace", "Ski storage", "Pool access"]
           },
           {
             "source": "Airbnb",
             "listing_id": "8631105",
-            "title": "Big Rock Fun - Beach Goers - Close to the Village",
+            "title": "Big Rock Fun - 3BR Near Village",
+            "location": "Incline Village, Nevada",
             "rating": 4.88,
-            "nightly_rate": 375,
-            "total_price": 1412,
-            "host": "David"
+            "num_reviews": 95,
+            "beds": 3,
+            "bathrooms": 2,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 375,
+              "total_price": 1125,
+              "num_nights": 3
+            },
+            "amenities": ["Beach access", "Village nearby", "Deck", "Fireplace", "Kitchen"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "tahoe_3br_cozy",
+            "title": "Cozy 3BR Cabin with Fireplace",
+            "location": "Tahoe City, California",
+            "rating": 4.81,
+            "num_reviews": 134,
+            "beds": 3,
+            "bathrooms": 1.5,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 295,
+              "total_price": 885,
+              "num_nights": 3
+            },
+            "amenities": ["Fireplace", "Kitchen", "Forest views", "Free parking", "Wifi"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "46690528",
+            "title": "Quiet and Cozy Stay in Tahoe City - 2BR",
+            "location": "Tahoe City, California",
+            "rating": 4.82,
+            "num_reviews": 172,
+            "beds": 2,
+            "bathrooms": 1.5,
+            "max_guests": 5,
+            "pricing": {
+              "nightly_rate": 285,
+              "total_price": 855,
+              "num_nights": 3
+            },
+            "amenities": ["Multiple pools", "Tennis courts", "Near beaches", "WiFi", "Free parking"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "tahoe_2br_modern",
+            "title": "Modern 2BR Condo with Mountain Views",
+            "location": "South Lake Tahoe, California",
+            "rating": 4.75,
+            "num_reviews": 98,
+            "beds": 2,
+            "bathrooms": 1,
+            "max_guests": 4,
+            "pricing": {
+              "nightly_rate": 245,
+              "total_price": 735,
+              "num_nights": 3
+            },
+            "amenities": ["Mountain views", "Ski nearby", "Kitchen", "Wifi", "Hot tub access"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "tahoe_studio_budget",
+            "title": "Budget Studio with Lake Views",
+            "location": "Incline Village, Nevada",
+            "rating": 4.65,
+            "num_reviews": 67,
+            "beds": 1,
+            "bathrooms": 1,
+            "max_guests": 2,
+            "pricing": {
+              "nightly_rate": 165,
+              "total_price": 495,
+              "num_nights": 3
+            },
+            "amenities": ["Lake views", "Kitchen", "Wifi", "Ski nearby"]
+          }
+        ]
+      },
+      {
+        "destination_id": "dest_003",
+        "name": "San Diego, California, USA",
+        "region": "California",
+        "search_info": {
+          "search_date": "2025-10-25",
+          "check_in": "2025-11-07",
+          "check_out": "2025-11-09",
+          "num_nights": 2,
+          "num_adults": 3
+        },
+        "properties": [
+          {
+            "source": "Airbnb",
+            "listing_id": "sd_luxury_1",
+            "title": "Luxury 6BR Ocean View Estate",
+            "location": "La Jolla, California",
+            "rating": 4.94,
+            "num_reviews": 178,
+            "beds": 6,
+            "bathrooms": 5,
+            "max_guests": 14,
+            "pricing": {
+              "nightly_rate": 895,
+              "total_price": 1790,
+              "num_nights": 2
+            },
+            "amenities": ["Ocean views", "Pool", "Hot tub", "Gourmet kitchen", "Game room", "Wifi", "Beach access"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd105",
+            "title": "Luxury 5BR Estate with Pool",
+            "location": "Pacific Beach, California",
+            "rating": 4.92,
+            "num_reviews": 145,
+            "beds": 5,
+            "bathrooms": 4,
+            "max_guests": 12,
+            "pricing": {
+              "nightly_rate": 595,
+              "total_price": 1190,
+              "num_nights": 2
+            },
+            "amenities": ["Pool", "Hot tub", "Gourmet kitchen", "Ocean views", "Game room", "Wifi"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd100",
+            "title": "Spacious Home with Hot Tub - 4BR",
+            "location": "Mission Beach, California",
+            "rating": 4.7,
+            "num_reviews": 76,
+            "beds": 4,
+            "bathrooms": 2.5,
+            "max_guests": 8,
+            "pricing": {
+              "nightly_rate": 344,
+              "total_price": 688,
+              "num_nights": 2
+            },
+            "amenities": ["Hot tub", "Pool", "Wifi", "Kitchen", "Free parking", "Workspace"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd101",
+            "title": "Family House Near Attractions - 4BR",
+            "location": "Ocean Beach, California",
+            "rating": 4.51,
+            "num_reviews": 37,
+            "beds": 4,
+            "bathrooms": 3,
+            "max_guests": 8,
+            "pricing": {
+              "nightly_rate": 342,
+              "total_price": 684,
+              "num_nights": 2
+            },
+            "amenities": ["Wifi", "Washer", "Pool", "Kitchen", "Workspace"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd_4br_budget",
+            "title": "Budget-Friendly 4BR Near Beach",
+            "location": "Point Loma, California",
+            "rating": 4.62,
+            "num_reviews": 89,
+            "beds": 4,
+            "bathrooms": 2,
+            "max_guests": 8,
+            "pricing": {
+              "nightly_rate": 285,
+              "total_price": 570,
+              "num_nights": 2
+            },
+            "amenities": ["Beach nearby", "Kitchen", "Free parking", "Wifi", "Patio"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd102",
+            "title": "Cozy 3BR Beach House",
+            "location": "Pacific Beach, California",
+            "rating": 4.85,
+            "num_reviews": 124,
+            "beds": 3,
+            "bathrooms": 2,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 275,
+              "total_price": 550,
+              "num_nights": 2
+            },
+            "amenities": ["Beach access", "Wifi", "Kitchen", "Free parking", "Patio"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd_3br_modern",
+            "title": "Modern 3BR with Rooftop Deck",
+            "location": "North Park, California",
+            "rating": 4.79,
+            "num_reviews": 102,
+            "beds": 3,
+            "bathrooms": 2,
+            "max_guests": 6,
+            "pricing": {
+              "nightly_rate": 245,
+              "total_price": 490,
+              "num_nights": 2
+            },
+            "amenities": ["Rooftop deck", "Wifi", "Kitchen", "Workspace", "Near restaurants"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd103",
+            "title": "Modern 2BR Downtown Condo",
+            "location": "Downtown San Diego, California",
+            "rating": 4.72,
+            "num_reviews": 89,
+            "beds": 2,
+            "bathrooms": 1.5,
+            "max_guests": 4,
+            "pricing": {
+              "nightly_rate": 195,
+              "total_price": 390,
+              "num_nights": 2
+            },
+            "amenities": ["Downtown location", "Wifi", "Kitchen", "Gym", "Rooftop"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd_2br_beach",
+            "title": "Charming 2BR Beach Cottage",
+            "location": "Ocean Beach, California",
+            "rating": 4.81,
+            "num_reviews": 134,
+            "beds": 2,
+            "bathrooms": 1,
+            "max_guests": 4,
+            "pricing": {
+              "nightly_rate": 175,
+              "total_price": 350,
+              "num_nights": 2
+            },
+            "amenities": ["Beach nearby", "Kitchen", "Patio", "Free parking", "Wifi"]
+          },
+          {
+            "source": "Airbnb",
+            "listing_id": "sd104",
+            "title": "Budget-Friendly Studio Near Beach",
+            "location": "Pacific Beach, California",
+            "rating": 4.6,
+            "num_reviews": 52,
+            "beds": 1,
+            "bathrooms": 1,
+            "max_guests": 2,
+            "pricing": {
+              "nightly_rate": 125,
+              "total_price": 250,
+              "num_nights": 2
+            },
+            "amenities": ["Beach nearby", "Wifi", "Kitchen", "Free parking"]
           }
         ]
       }
     ]
   }
 }
+
+
